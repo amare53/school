@@ -1,15 +1,21 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { School, Shield, Users, BarChart3 } from 'lucide-react';
-import { LoginForm } from '../components/LoginForm';
-import { useAuth } from '../../../shared/hooks';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { School, Shield, Users, BarChart3 } from "lucide-react";
+import { LoginForm } from "../components/LoginForm";
+import { useAuth } from "../../../shared/hooks";
+import { USER_ROLES } from "@/shared/constants";
 
 const LoginPage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   // Rediriger si déjà connecté
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return (
+      <Navigate
+        to={user?.role !== USER_ROLES.CASHIER ? "/dashboard" : "/students"}
+        replace
+      />
+    );
   }
 
   return (
@@ -18,9 +24,12 @@ const LoginPage: React.FC = () => {
       <div className="hidden lg:flex lg:w-1/2 bg-blue-600 relative overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 bg-blue-700 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
@@ -44,9 +53,12 @@ const LoginPage: React.FC = () => {
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Gestion des Élèves</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Gestion des Élèves
+                </h3>
                 <p className="text-blue-100 text-sm leading-relaxed">
-                  Gérez facilement les dossiers élèves, inscriptions et suivez leur parcours académique en temps réel.
+                  Gérez facilement les dossiers élèves, inscriptions et suivez
+                  leur parcours académique en temps réel.
                 </p>
               </div>
             </div>
@@ -56,9 +68,12 @@ const LoginPage: React.FC = () => {
                 <BarChart3 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Facturation Intelligente</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Facturation Intelligente
+                </h3>
                 <p className="text-blue-100 text-sm leading-relaxed">
-                  Automatisez la facturation, suivez les paiements et générez des rapports financiers détaillés.
+                  Automatisez la facturation, suivez les paiements et générez
+                  des rapports financiers détaillés.
                 </p>
               </div>
             </div>
@@ -68,9 +83,12 @@ const LoginPage: React.FC = () => {
                 <Shield className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Sécurité & Conformité</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Sécurité & Conformité
+                </h3>
                 <p className="text-blue-100 text-sm leading-relaxed">
-                  Données sécurisées, accès contrôlés par rôles et conformité aux réglementations en vigueur.
+                  Données sécurisées, accès contrôlés par rôles et conformité
+                  aux réglementations en vigueur.
                 </p>
               </div>
             </div>
@@ -106,17 +124,19 @@ const LoginPage: React.FC = () => {
                 <School className="h-7 w-7 text-white" />
               </div>
               <div className="text-left">
-                <h1 className="text-2xl font-bold text-gray-900">SchoolManager Pro</h1>
-                <p className="text-gray-600 text-sm">Gestion scolaire intégrée</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  SchoolManager Pro
+                </h1>
+                <p className="text-gray-600 text-sm">
+                  Gestion scolaire intégrée
+                </p>
               </div>
             </div>
           </div>
 
           {/* Titre du formulaire */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Connexion
-            </h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Connexion</h2>
             <p className="text-gray-600">
               Connectez-vous pour accéder à votre tableau de bord
             </p>
@@ -129,15 +149,19 @@ const LoginPage: React.FC = () => {
 
           {/* Footer */}
           <div className="text-center mt-8 text-sm text-gray-500">
-            <p>
-              © 2024 SchoolManager Pro. Tous droits réservés.
-            </p>
+            <p>© 2024 SchoolManager Pro. Tous droits réservés.</p>
             <div className="mt-2 space-x-4">
-              <a href="#" className="hover:text-blue-600">Conditions d'utilisation</a>
+              <a href="#" className="hover:text-blue-600">
+                Conditions d'utilisation
+              </a>
               <span>•</span>
-              <a href="#" className="hover:text-blue-600">Politique de confidentialité</a>
+              <a href="#" className="hover:text-blue-600">
+                Politique de confidentialité
+              </a>
               <span>•</span>
-              <a href="#" className="hover:text-blue-600">Support</a>
+              <a href="#" className="hover:text-blue-600">
+                Support
+              </a>
             </div>
           </div>
         </div>

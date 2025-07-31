@@ -4,7 +4,6 @@ import { Button } from "../../../shared/components/ui/Button";
 import { Input } from "../../../shared/components/ui/Input";
 import { Select } from "../../../shared/components/ui/Select";
 import { useAuth, useUI } from "../../../shared/hooks";
-import { useFakeDataStore } from "../../../shared/stores/fakeData";
 import type { Section } from "../../../shared/types";
 
 interface SectionFormProps {
@@ -19,7 +18,6 @@ const SectionForm: React.FC<SectionFormProps> = ({
   onCancel,
 }) => {
   const { currentSchool } = useAuth();
-  const { addSection, updateSection } = useFakeDataStore();
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -85,16 +83,15 @@ const SectionForm: React.FC<SectionFormProps> = ({
 
     try {
       if (section) {
-        // Mise à jour
-        updateSection(section.id, formData);
+        // TODO: Appel API pour mise à jour
+        // await sectionsApi.update(section.id, formData);
+        showNotification("Mise à jour non implémentée", "warning");
+        return;
       } else {
-        // Création
-        addSection({
-          levelId: "", // Plus utilisé
-          name: formData.name,
-          code: formData.code,
-          schoolId: currentSchool?.id || "",
-        });
+        // TODO: Appel API pour création
+        // await sectionsApi.create(formData);
+        showNotification("Création non implémentée", "warning");
+        return;
       }
 
       const action = section ? "modifiée" : "créée";

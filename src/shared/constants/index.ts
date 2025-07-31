@@ -1,10 +1,10 @@
 // Constantes globales de l'application
 
 export const USER_ROLES = {
-  PLATFORM_ADMIN: "platform_admin",
-  SCHOOL_MANAGER: "school_manager",
-  CASHIER: "cashier",
-  ACCOUNTANT: "accountant",
+  PLATFORM_ADMIN: "ROLE_PLATFORM_ADMIN",
+  SCHOOL_MANAGER: "ROLE_SCHOOL_MANAGER",
+  CASHIER: "ROLE_CASHIER",
+  ACCOUNTANT: "ROLE_ACCOUNTANT",
 } as const;
 
 export const USER_ROLE_LABELS = {
@@ -117,20 +117,36 @@ export const SUCCESS_MESSAGES = {
 // Permissions par rôle
 export const PERMISSIONS = {
   [USER_ROLES.PLATFORM_ADMIN]: [
-    "*", // Toutes les permissions
+    "platform:manage", // Gestion de la plateforme
+    "schools:create",
+    "schools:read",
+    "schools:update",
+    "schools:delete",
+    "school_managers:create",
+    "school_managers:read",
+    "school_managers:update",
+    "school_managers:delete",
+    "reports:platform",
   ],
   [USER_ROLES.SCHOOL_MANAGER]: [
-    "school:manage",
-    "users:create",
-    "users:read",
-    "users:update",
+    "schools:read", // Peut voir ses écoles assignées
+    "schools:update", // Peut modifier ses écoles assignées
     "academic:manage",
     "students:manage",
+    "cashiers:create",
+    "cashiers:read",
+    "cashiers:update",
+    "cashiers:delete",
+    "accountants:create",
+    "accountants:read",
+    "accountants:update",
+    "accountants:delete",
     "billing:configure",
     "reports:school",
     "settings:manage",
   ],
   [USER_ROLES.CASHIER]: [
+    "school:read", // Peut voir son école uniquement
     "students:create",
     "students:read",
     "students:update",
@@ -144,6 +160,7 @@ export const PERMISSIONS = {
     "reports:financial",
   ],
   [USER_ROLES.ACCOUNTANT]: [
+    "school:read", // Peut voir son école uniquement
     "accounting:read",
     "reports:accounting",
     "payments:read",

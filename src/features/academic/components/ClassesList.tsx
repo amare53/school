@@ -15,7 +15,6 @@ import {
   useAuth,
   useModal,
 } from "../../../shared/hooks";
-import { useFakeDataStore } from "../../../shared/stores/fakeData";
 import { ClassForm } from "./ClassForm";
 import type { Class } from "../../../shared/types";
 import { classesApi } from "@/shared/services/api";

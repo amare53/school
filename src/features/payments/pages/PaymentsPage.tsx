@@ -1,49 +1,52 @@
-import React, { useState } from 'react';
-import { Plus, CreditCard, Receipt, DollarSign, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/ui/Card';
-import { Button } from '../../../shared/components/ui/Button';
-import { Badge } from '../../../shared/components/ui/Badge';
-import { useAuth, useModal } from '../../../shared/hooks';
-import { useFakeDataStore } from '../../../shared/stores/fakeData';
-import { PaymentsList } from '../components/PaymentsList';
-import { PaymentForm } from '../components/PaymentForm';
-import { AccountingEntriesList } from '../components/AccountingEntriesList';
-import { Modal } from '../../../shared/components/ui/Modal';
+import React, { useState } from "react";
+import {
+  Plus,
+  CreditCard,
+  Receipt,
+  DollarSign,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../../shared/components/ui/Card";
+import { Button } from "../../../shared/components/ui/Button";
+import { Badge } from "../../../shared/components/ui/Badge";
+import { useAuth, useModal } from "../../../shared/hooks";
+import { PaymentsList } from "../components/PaymentsList";
+import { PaymentForm } from "../components/PaymentForm";
+import { AccountingEntriesList } from "../components/AccountingEntriesList";
+import { Modal } from "../../../shared/components/ui/Modal";
 
-type TabType = 'payments' | 'accounting';
+type TabType = "payments" | "accounting";
 
 const PaymentsPage: React.FC = () => {
   const { user, currentSchool } = useAuth();
-  const { 
-    getPaymentsBySchool, 
-    getAccountingEntriesBySchool,
-    getInvoicesBySchool 
-  } = useFakeDataStore();
-  const [activeTab, setActiveTab] = useState<TabType>('payments');
+  const [activeTab, setActiveTab] = useState<TabType>("payments");
   const { isOpen: isFormOpen, open: openForm, close: closeForm } = useModal();
 
-  // Récupérer les données pour l'école courante
-  const schoolId = currentSchool?.id || '';
-  const payments = getPaymentsBySchool(schoolId);
-  const accountingEntries = getAccountingEntriesBySchool(schoolId);
-  const invoices = getInvoicesBySchool(schoolId);
-
-  // Calculer les statistiques
-  const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
-  const todayPayments = payments.filter(p => 
-    new Date(p.paymentDate).toDateString() === new Date().toDateString()
-  ).length;
-  const pendingInvoices = invoices.filter(i => i.status === 'pending').length;
-  const overdueInvoices = invoices.filter(i => i.status === 'overdue').length;
+  // TODO: Remplacer par des appels API réels
+  const totalPayments = 0;
+  const todayPayments = 0;
+  const pendingInvoices = 0;
+  const overdueInvoices = 0;
+  const payments: any[] = [];
+  const accountingEntries: any[] = [];
 
   // Vérifier les permissions
-  if (!user || !['platform_admin', 'school_manager', 'cashier'].includes(user.role)) {
+  if (!user || !["school_manager", "cashier"].includes(user.role)) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CreditCard className="w-8 h-8 text-red-600" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Accès refusé</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Accès refusé
+        </h2>
         <p className="text-gray-600">
           Vous n'avez pas les permissions pour gérer les paiements.
         </p>
@@ -53,26 +56,26 @@ const PaymentsPage: React.FC = () => {
 
   const tabs = [
     {
-      id: 'payments' as TabType,
-      name: 'Paiements',
+      id: "payments" as TabType,
+      name: "Paiements",
       icon: CreditCard,
-      description: 'Gérer les paiements',
+      description: "Gérer les paiements",
       count: payments.length,
     },
     {
-      id: 'accounting' as TabType,
-      name: 'Écritures Comptables',
+      id: "accounting" as TabType,
+      name: "Écritures Comptables",
       icon: Receipt,
-      description: 'Voir les écritures',
+      description: "Voir les écritures",
       count: accountingEntries.length,
     },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'payments':
+      case "payments":
         return <PaymentsList />;
-      case 'accounting':
+      case "accounting":
         return <AccountingEntriesList />;
       default:
         return null;
@@ -84,15 +87,14 @@ const PaymentsPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestion des Paiements</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestion des Paiements
+          </h1>
           <p className="text-gray-600">
             Gérez les paiements et écritures comptables de {currentSchool?.name}
           </p>
         </div>
-        <Button 
-          onClick={openForm}
-          leftIcon={<Plus className="h-4 w-4" />}
-        >
+        <Button onClick={openForm} leftIcon={<Plus className="h-4 w-4" />}>
           Nouveau Paiement
         </Button>
       </div>
@@ -106,9 +108,12 @@ const PaymentsPage: React.FC = () => {
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Encaissé</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Encaissé
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {totalPayments.toLocaleString()} {currentSchool?.currency || 'CDF'}
+                  {totalPayments.toLocaleString()}{" "}
+                  {currentSchool?.currency || "CDF"}
                 </p>
               </div>
             </div>
@@ -122,8 +127,12 @@ const PaymentsPage: React.FC = () => {
                 <CreditCard className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Paiements Aujourd'hui</p>
-                <p className="text-2xl font-bold text-gray-900">{todayPayments}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Paiements Aujourd'hui
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {todayPayments}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -136,8 +145,12 @@ const PaymentsPage: React.FC = () => {
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Factures En Attente</p>
-                <p className="text-2xl font-bold text-gray-900">{pendingInvoices}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Factures En Attente
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {pendingInvoices}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -150,8 +163,12 @@ const PaymentsPage: React.FC = () => {
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Factures En Retard</p>
-                <p className="text-2xl font-bold text-gray-900">{overdueInvoices}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Factures En Retard
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {overdueInvoices}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -169,15 +186,15 @@ const PaymentsPage: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 <Icon className="h-4 w-4 mr-2" />
                 {tab.name}
-                <Badge 
-                  variant={activeTab === tab.id ? 'info' : 'default'} 
-                  size="sm" 
+                <Badge
+                  variant={activeTab === tab.id ? "info" : "default"}
+                  size="sm"
                   className="ml-2"
                 >
                   {tab.count}
@@ -189,9 +206,7 @@ const PaymentsPage: React.FC = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="mt-6">
-        {renderTabContent()}
-      </div>
+      <div className="mt-6">{renderTabContent()}</div>
 
       {/* Payment Form Modal */}
       <Modal

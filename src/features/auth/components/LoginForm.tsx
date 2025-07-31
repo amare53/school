@@ -7,11 +7,12 @@ import { useAuth, useUI } from "../../../shared/hooks";
 import { authApi } from "../../../shared/services/api";
 import { loginSchema, type LoginFormData } from "../../../shared/validations";
 import * as z from "zod";
+import { USER_ROLES } from "@/shared/constants";
 
 const LoginForm: React.FC = () => {
   const [formData, setFormData] = useState<LoginFormData>({
-    email: "",
-    password: "",
+    email: "admin@csoasis.com",
+    password: "password123",
   });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [showPassword, setShowPassword] = useState(false);
@@ -67,16 +68,22 @@ const LoginForm: React.FC = () => {
       login(response.user, response.token);
 
       // Si l'utilisateur a une école associée, la définir comme école courante
-      if (response.user.schoolId) {
+      if (response.user.schoolId && response.user.school) {
         // Ici on pourrait faire un appel API pour récupérer les détails de l'école
         // Pour l'instant, on simule
         setCurrentSchool(response.user.school);
+      } else if (
+        response.user.role === USER_ROLES.SCHOOL_MANAGER &&
+        response.user.assignedSchools?.length === 1
+      ) {
+        // Si school_manager avec une seule école, la définir comme courante
+        // Dans un vrai système, on récupérerait les détails de l'école
+        // setCurrentSchool(schoolDetails);
       }
 
       showNotification("Connexion réussie", "success", "Bienvenue !", 5000);
-      navigate("/dashboard", { replace: true });
+      // navigate("/students", { replace: true });
     } catch (error: any) {
-      console.log(error);
       showNotification(
         error.message || "Erreur de connexion",
         "error",
@@ -168,14 +175,14 @@ const LoginForm: React.FC = () => {
             <p className="font-medium mb-1">Comptes de démonstration :</p>
             <div className="space-y-1 text-xs">
               <p>
-                <strong>Admin :</strong> admin@csoasis.com / password123
+                <strong>Admin École:</strong> admin@csoasis.com / password123
               </p>
-              <p>
-                <strong>Admin École 1 :</strong> admin.ecole1@csoasis.com /
+              {/* <p>
+                <strong>Admin École :</strong> admin.ecole@csoasis.com /
                 password123
-              </p>
+              </p> */}
               <p>
-                <strong>Caissier :</strong> cashier1@csoasis.com / password123
+                <strong>Caissier :</strong> cashier@csoasis.com / password123
               </p>
             </div>
           </div>

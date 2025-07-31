@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, AlertCircle } from 'lucide-react';
-import { Button } from '../../../shared/components/ui/Button';
-import { Input } from '../../../shared/components/ui/Input';
-import { useAuth, useUI } from '../../../shared/hooks';
-import { useAcademic } from '../../../shared/hooks';
-import { academicYearSchema, type AcademicYearFormData } from '../../../shared/validations';
-import type { AcademicYear } from '../../../shared/types';
+import React, { useState, useEffect } from "react";
+import { Calendar, AlertCircle } from "lucide-react";
+import { Button } from "../../../shared/components/ui/Button";
+import { Input } from "../../../shared/components/ui/Input";
+import { useAuth, useUI } from "../../../shared/hooks";
+import {
+  academicYearSchema,
+  type AcademicYearFormData,
+} from "../../../shared/validations";
+import type { AcademicYear } from "../../../shared/types";
 
 interface AcademicYearFormProps {
   academicYear?: AcademicYear | null;
@@ -13,17 +15,16 @@ interface AcademicYearFormProps {
   onCancel: () => void;
 }
 
-const AcademicYearForm: React.FC<AcademicYearFormProps> = ({ 
-  academicYear, 
-  onSuccess, 
-  onCancel 
+const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
+  academicYear,
+  onSuccess,
+  onCancel,
 }) => {
   const { currentSchool } = useAuth();
-  const { addAcademicYear, updateAcademicYear } = useAcademic();
   const [formData, setFormData] = useState<AcademicYearFormData>({
-    name: '',
-    startDate: '',
-    endDate: '',
+    name: "",
+    startDate: "",
+    endDate: "",
   });
   const [errors, setErrors] = useState<Partial<AcademicYearFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +43,7 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
       // Générer automatiquement le nom pour une nouvelle année
       const currentYear = new Date().getFullYear();
       const nextYear = currentYear + 1;
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         name: `${currentYear}-${nextYear}`,
         startDate: `${currentYear}-09-01`,
@@ -51,15 +52,15 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
     }
   }, [academicYear]);
 
-  const handleChange = (field: keyof AcademicYearFormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
-    // Effacer l'erreur quand l'utilisateur tape
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleChange =
+    (field: keyof AcademicYearFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+      // Effacer l'erreur quand l'utilisateur tape
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    };
 
   const validateForm = (): boolean => {
     try {
@@ -79,34 +80,32 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       if (academicYear) {
-        // Mise à jour
-        updateAcademicYear(academicYear.id, formData);
+        // TODO: Appel API pour mise à jour
+        // await academicYearsApi.update(academicYear.id, formData);
+        showNotification("Mise à jour non implémentée", "warning");
+        return;
       } else {
-        // Création
-        addAcademicYear({
-          ...formData,
-          schoolId: currentSchool?.id || '',
-          status: 'active',
-          isCurrent: false,
-        });
+        // TODO: Appel API pour création
+        // await academicYearsApi.create(formData);
+        showNotification("Création non implémentée", "warning");
+        return;
       }
-      
-      const action = academicYear ? 'modifiée' : 'créée';
-      showNotification(`Année académique ${action} avec succès`, 'success');
-      
+
+      const action = academicYear ? "modifiée" : "créée";
+      showNotification(`Année académique ${action} avec succès`, "success");
+
       onSuccess();
-      
     } catch (error: any) {
       showNotification(
-        error.message || 'Erreur lors de la sauvegarde',
-        'error'
+        error.message || "Erreur lors de la sauvegarde",
+        "error"
       );
     } finally {
       setIsLoading(false);
@@ -126,7 +125,7 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
           label="Nom de l'année *"
           placeholder="Ex: 2024-2025"
           value={formData.name}
-          onChange={handleChange('name')}
+          onChange={handleChange("name")}
           error={errors.name}
           disabled={isLoading}
           helperText="Format recommandé: YYYY-YYYY"
@@ -137,7 +136,7 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
             label="Date de début *"
             type="date"
             value={formData.startDate}
-            onChange={handleChange('startDate')}
+            onChange={handleChange("startDate")}
             error={errors.startDate}
             disabled={isLoading}
           />
@@ -146,7 +145,7 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
             label="Date de fin *"
             type="date"
             value={formData.endDate}
-            onChange={handleChange('endDate')}
+            onChange={handleChange("endDate")}
             error={errors.endDate}
             disabled={isLoading}
           />
@@ -160,8 +159,12 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
           <div className="text-sm text-blue-800">
             <p className="font-medium mb-1">Points importants :</p>
             <ul className="space-y-1 text-xs">
-              <li>• Une seule année peut être définie comme "année courante"</li>
-              <li>• Les dates ne peuvent pas se chevaucher avec d'autres années</li>
+              <li>
+                • Une seule année peut être définie comme "année courante"
+              </li>
+              <li>
+                • Les dates ne peuvent pas se chevaucher avec d'autres années
+              </li>
               <li>• L'archivage se fait automatiquement à la fin de l'année</li>
               <li>• Les inscriptions sont liées aux années académiques</li>
             </ul>
@@ -179,12 +182,8 @@ const AcademicYearForm: React.FC<AcademicYearFormProps> = ({
         >
           Annuler
         </Button>
-        <Button
-          type="submit"
-          loading={isLoading}
-          disabled={isLoading}
-        >
-          {academicYear ? 'Modifier' : 'Créer'} l'Année
+        <Button type="submit" loading={isLoading} disabled={isLoading}>
+          {academicYear ? "Modifier" : "Créer"} l'Année
         </Button>
       </div>
     </form>

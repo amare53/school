@@ -15,12 +15,16 @@ import { SectionsPage } from "./features/academic/pages/SectionsPage";
 import { ClassesPage } from "./features/academic/pages/ClassesPage";
 import { StudentsListPage } from "./features/students/pages/StudentsListPage";
 import { StudentDetailsPage } from "./features/students/pages/StudentDetailsPage";
+import { StudentCreatePage } from "./features/students/pages/StudentCreatePage";
 import { StudentEditPage } from "./features/students/pages/StudentEditPage";
 import { StudentEnrollPage } from "./features/students/pages/StudentEnrollPage";
 import { BillingPage } from "./features/billing/pages/BillingPage";
 import { PaymentsPage } from "./features/payments/pages/PaymentsPage";
 import { ExpensesPage } from "./features/expenses/pages/ExpensesPage";
 import { ReportsPage } from "./features/reports/pages/ReportsPage";
+import { SchoolManagersListPage } from "./features/users/pages/SchoolManagersListPage";
+import { UsersListPage } from "./features/users/pages/UsersListPage";
+import { USER_ROLES } from "./shared/constants";
 
 // Pages temporaires pour la démonstration
 const Dashboard = () => (
@@ -30,7 +34,7 @@ const Dashboard = () => (
       <p className="text-gray-600">Vue d'ensemble de votre école</p>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold text-gray-900">Élèves</h3>
         <p className="text-3xl font-bold text-blue-600">1,234</p>
@@ -39,15 +43,15 @@ const Dashboard = () => (
 
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold text-gray-900">Revenus</h3>
-        <p className="text-3xl font-bold text-green-600">2,450,000 XOF</p>
+        <p className="text-3xl font-bold text-green-600">2,450,000 CDF</p>
         <p className="text-sm text-gray-500">Ce mois</p>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow">
+      {/* <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold text-gray-900">Factures</h3>
         <p className="text-3xl font-bold text-orange-600">45</p>
         <p className="text-sm text-gray-500">En attente</p>
-      </div>
+      </div> */}
 
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold text-gray-900">Paiements</h3>
@@ -66,7 +70,13 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute
+              requiredRoles={[
+                USER_ROLES.PLATFORM_ADMIN,
+                USER_ROLES.SCHOOL_MANAGER,
+                USER_ROLES.ACCOUNTANT,
+              ]}
+            >
               <Dashboard />
             </ProtectedRoute>
           }
@@ -84,7 +94,12 @@ function App() {
         <Route
           path="/schools"
           element={
-            <ProtectedRoute requiredRoles={["platform_admin"]}>
+            <ProtectedRoute
+              requiredRoles={[
+                USER_ROLES.PLATFORM_ADMIN,
+                USER_ROLES.SCHOOL_MANAGER,
+              ]}
+            >
               <SchoolsListPage />
             </ProtectedRoute>
           }
@@ -93,9 +108,7 @@ function App() {
         <Route
           path="/structure"
           element={
-            <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager"]}
-            >
+            <ProtectedRoute requiredRoles={[USER_ROLES.SCHOOL_MANAGER]}>
               <AcademicStructurePage />
             </ProtectedRoute>
           }
@@ -104,9 +117,7 @@ function App() {
         <Route
           path="/sections"
           element={
-            <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager"]}
-            >
+            <ProtectedRoute requiredRoles={[USER_ROLES.SCHOOL_MANAGER]}>
               <SectionsPage />
             </ProtectedRoute>
           }
@@ -115,9 +126,7 @@ function App() {
         <Route
           path="/academic-years"
           element={
-            <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager"]}
-            >
+            <ProtectedRoute requiredRoles={[USER_ROLES.SCHOOL_MANAGER]}>
               <AcademicYearsPage />
             </ProtectedRoute>
           }
@@ -126,9 +135,7 @@ function App() {
         <Route
           path="/classes"
           element={
-            <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager"]}
-            >
+            <ProtectedRoute requiredRoles={[USER_ROLES.SCHOOL_MANAGER]}>
               <ClassesPage />
             </ProtectedRoute>
           }
@@ -138,9 +145,20 @@ function App() {
           path="/students"
           element={
             <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager", "cashier"]}
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
             >
               <StudentsListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/students/create"
+          element={
+            <ProtectedRoute
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
+            >
+              <StudentCreatePage />
             </ProtectedRoute>
           }
         />
@@ -149,7 +167,7 @@ function App() {
           path="/students/:id"
           element={
             <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager", "cashier"]}
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
             >
               <StudentDetailsPage />
             </ProtectedRoute>
@@ -160,7 +178,7 @@ function App() {
           path="/students/:id/edit"
           element={
             <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager", "cashier"]}
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
             >
               <StudentEditPage />
             </ProtectedRoute>
@@ -171,7 +189,7 @@ function App() {
           path="/students/:id/enroll"
           element={
             <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager", "cashier"]}
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
             >
               <StudentEnrollPage />
             </ProtectedRoute>
@@ -182,7 +200,7 @@ function App() {
           path="/billing"
           element={
             <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager", "cashier"]}
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
             >
               <BillingPage />
             </ProtectedRoute>
@@ -193,7 +211,7 @@ function App() {
           path="/payments"
           element={
             <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager", "cashier"]}
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
             >
               <PaymentsPage />
             </ProtectedRoute>
@@ -204,7 +222,11 @@ function App() {
           path="/expenses"
           element={
             <ProtectedRoute
-              requiredRoles={["platform_admin", "school_manager", "cashier"]}
+              requiredRoles={[
+                USER_ROLES.PLATFORM_ADMIN,
+                USER_ROLES.SCHOOL_MANAGER,
+                USER_ROLES.CASHIER,
+              ]}
             >
               <ExpensesPage />
             </ProtectedRoute>
@@ -215,37 +237,34 @@ function App() {
           path="/reports"
           element={
             <ProtectedRoute
-              requiredRoles={[
-                "platform_admin",
-                "school_manager",
-                "cashier",
-                "accountant",
-              ]}
+              requiredRoles={[]}
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
             >
               <ReportsPage />
             </ProtectedRoute>
           }
         />
 
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-        {/* Routes temporaires pour la navigation */}
         <Route
-          path="/users"
+          path="/school-managers"
           element={
-            <ProtectedRoute>
-              <div className="text-center py-12">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Gestion des Utilisateurs
-                </h1>
-                <p className="text-gray-600 mt-2">
-                  À implémenter dans les prochaines étapes
-                </p>
-              </div>
+            <ProtectedRoute requiredRoles={[USER_ROLES.PLATFORM_ADMIN]}>
+              <SchoolManagersListPage />
             </ProtectedRoute>
           }
         />
 
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute requiredRoles={[USER_ROLES.SCHOOL_MANAGER]}>
+              <UsersListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Routes temporaires pour la navigation */}
         <Route
           path="*"
           element={
@@ -255,7 +274,7 @@ function App() {
                   Page en construction
                 </h1>
                 <p className="text-gray-600 mt-2">
-                  Cette fonctionnalité sera implémentée prochainement
+                  À implémenter dans les prochaines étapes
                 </p>
               </div>
             </ProtectedRoute>

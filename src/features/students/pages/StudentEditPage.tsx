@@ -55,14 +55,6 @@ const StudentEditPage: React.FC = () => {
             Numéro d'élève : {student.studentNumber}
           </p>
         </div>
-
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/students/${student.id}`)}
-          leftIcon={<ArrowLeft className="h-4 w-4" />}
-        >
-          Retour
-        </Button>
       </div>
 
       {/* Formulaire */}

@@ -1,13 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { DollarSign, Calendar, FileText, Upload, Building, AlertCircle } from 'lucide-react';
-import { Button } from '../../../shared/components/ui/Button';
-import { Input } from '../../../shared/components/ui/Input';
-import { Select } from '../../../shared/components/ui/Select';
-import { useAuth, useUI } from '../../../shared/hooks';
-import { useFakeDataStore } from '../../../shared/stores/fakeData';
-import { expenseSchema, type ExpenseFormData } from '../../../shared/validations';
-import { generateExpenseNumber } from '../../../shared/utils';
-import type { Expense } from '../../../shared/types';
+import React, { useState, useEffect } from "react";
+import {
+  DollarSign,
+  Calendar,
+  FileText,
+  Upload,
+  Building,
+  AlertCircle,
+} from "lucide-react";
+import { Button } from "../../../shared/components/ui/Button";
+import { Input } from "../../../shared/components/ui/Input";
+import { Select } from "../../../shared/components/ui/Select";
+import {
+  useAccounting,
+  useAuth,
+  useExpenses,
+  useUI,
+} from "../../../shared/hooks";
+import { useFakeDataStore } from "../../../shared/stores/fakeData";
+import {
+  expenseSchema,
+  type ExpenseFormData,
+} from "../../../shared/validations";
+import { generateExpenseNumber } from "../../../shared/utils";
+import type { Expense } from "../../../shared/types";
+import { expensesApi } from "@/shared/services/api";
 
 interface ExpenseFormProps {
   expense?: Expense | null;
@@ -15,17 +31,23 @@ interface ExpenseFormProps {
   onCancel: () => void;
 }
 
-const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel }) => {
+const ExpenseForm: React.FC<ExpenseFormProps> = ({
+  expense,
+  onSuccess,
+  onCancel,
+}) => {
   const { currentSchool, user } = useAuth();
   const { addExpense, updateExpense } = useExpenses();
   const { addAccountingEntry } = useAccounting();
   const [formData, setFormData] = useState<ExpenseFormData>({
-    description: '',
+    description: "",
     amount: 0,
-    expenseDate: new Date().toISOString().split('T')[0],
-    category: 'other',
-    supplier: '',
-    receiptUrl: '',
+    expenseDate: new Date().toISOString().split("T")[0],
+    category: "other",
+    supplier: "",
+    receiptUrl: "",
+    school: `/api/schools/${user?.schoolId}`,
+    createdBy: `/api/users/${user?.id}`,
   });
   const [errors, setErrors] = useState<Partial<ExpenseFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -41,53 +63,66 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
         amount: expense.amount,
         expenseDate: expense.expenseDate,
         category: expense.category,
-        supplier: expense.supplier || '',
-        receiptUrl: expense.receiptUrl || '',
+        supplier: expense.supplier || "",
+        receiptUrl: expense.receiptUrl || "",
+        school: `/api/schools/${user?.schoolId}`,
+        createdBy: `/api/users/${user?.id}`,
       });
     }
   }, [expense]);
 
-  const handleChange = (field: keyof ExpenseFormData) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const value = field === 'amount' ? parseFloat(e.target.value) || 0 : e.target.value;
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Effacer l'erreur
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleChange =
+    (field: keyof ExpenseFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = e.target.value;
+      setFormData((prev) => ({ ...prev, [field]: value }));
 
-  const handleSelectChange = (field: keyof ExpenseFormData) => (value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+      // Effacer l'erreur
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    };
+
+  const handleSelectChange =
+    (field: keyof ExpenseFormData) => (value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validation du fichier
       const maxSize = 5 * 1024 * 1024; // 5MB
-      const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-      
+      const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+
       if (file.size > maxSize) {
-        showNotification('Le fichier ne peut pas dépasser 5MB', 'error');
+        showNotification(
+          "Le fichier ne peut pas dépasser 5MB",
+          "error",
+          "",
+          5000
+        );
         return;
       }
-      
+
       if (!allowedTypes.includes(file.type)) {
-        showNotification('Seuls les fichiers JPG, PNG et PDF sont acceptés', 'error');
+        showNotification(
+          "Seuls les fichiers JPG, PNG et PDF sont acceptés",
+          "error",
+          "",
+          5000
+        );
         return;
       }
-      
+
       setUploadedFile(file);
       // Simuler l'upload - dans un vrai système, on uploadrait vers un serveur
       const fakeUrl = `https://storage.example.com/receipts/${file.name}`;
-      setFormData(prev => ({ ...prev, receiptUrl: fakeUrl }));
-      showNotification('Justificatif uploadé avec succès', 'success');
+      setFormData((prev) => ({ ...prev, receiptUrl: fakeUrl }));
+      showNotification("Justificatif uploadé avec succès", "success", "", 5000);
     }
   };
 
@@ -98,7 +133,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
       return true;
     } catch (error: any) {
       const fieldErrors: Partial<ExpenseFormData> = {};
-      error.errors?.forEach((err: any) => {
+      error.issues?.forEach((err: any) => {
         const field = err.path[0] as keyof ExpenseFormData;
         fieldErrors[field] = err.message;
       });
@@ -109,40 +144,34 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
+      const data = { ...formData };
       if (expense) {
         // Mise à jour
-        updateExpense(expense.id, formData);
+        updateExpense(expense.id, data);
       } else {
         // Création
-        const schoolCode = currentSchool?.name.substring(0, 3).toUpperCase() || 'SCH';
-        const expenseNumber = generateExpenseNumber(schoolCode);
-        
-        const newExpense = addExpense({
-          ...formData,
-          schoolId: currentSchool?.id || '',
-          expenseNumber,
-          createdBy: user?.id || '',
-        });
+        await expensesApi.create(data);
 
         // Créer les écritures comptables automatiques
-        await createAccountingEntries(newExpense);
+        // await createAccountingEntries(newExpense);
       }
-      
-      const action = expense ? 'modifiée' : 'enregistrée';
-      showNotification(`Dépense ${action} avec succès`, 'success');
-      
+
+      const action = expense ? "modifiée" : "enregistrée";
+      showNotification(`Dépense ${action} avec succès`, "success", "", 5000);
+
       onSuccess();
-      
     } catch (error: any) {
       showNotification(
-        error.message || 'Erreur lors de la sauvegarde',
-        'error'
+        error.message || "Erreur lors de la sauvegarde",
+        "error",
+        "",
+        5000
       );
     } finally {
       setIsLoading(false);
@@ -150,28 +179,33 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
   };
 
   const createAccountingEntries = async (expense: Expense) => {
-    const currency = currentSchool?.currency || 'CDF';
-    
+    const currency = currentSchool?.currency || "CDF";
+
     // Déterminer le compte de charge selon la catégorie
     const getChargeAccount = (category: string) => {
       switch (category) {
-        case 'salaries': return '6411'; // Charges de personnel
-        case 'utilities': return '6061'; // Services extérieurs
-        case 'supplies': return '6011'; // Achats
-        case 'maintenance': return '6151'; // Entretien et réparations
-        default: return '6281'; // Autres charges
+        case "salaries":
+          return "6411"; // Charges de personnel
+        case "utilities":
+          return "6061"; // Services extérieurs
+        case "supplies":
+          return "6011"; // Achats
+        case "maintenance":
+          return "6151"; // Entretien et réparations
+        default:
+          return "6281"; // Autres charges
       }
     };
 
     const chargeAccount = getChargeAccount(expense.category);
-    
+
     // Écriture de débit (Charge)
     addAccountingEntry({
-      schoolId: currentSchool?.id || '',
+      schoolId: currentSchool?.id || "",
       entryNumber: `ECR-${expense.expenseNumber}`,
       entryDate: expense.expenseDate,
       description: `Dépense ${expense.description}`,
-      referenceType: 'expense',
+      referenceType: "expense",
       referenceId: expense.id,
       debitAmount: expense.amount,
       creditAmount: 0,
@@ -181,25 +215,25 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
 
     // Écriture de crédit (Caisse)
     addAccountingEntry({
-      schoolId: currentSchool?.id || '',
+      schoolId: currentSchool?.id || "",
       entryNumber: `ECR-${expense.expenseNumber}-2`,
       entryDate: expense.expenseDate,
       description: `Sortie de caisse ${expense.expenseNumber}`,
-      referenceType: 'expense',
+      referenceType: "expense",
       referenceId: expense.id,
       debitAmount: 0,
       creditAmount: expense.amount,
-      accountCode: '5111', // Caisse
+      accountCode: "5111", // Caisse
       currency,
     });
   };
 
   const categoryOptions = [
-    { value: 'salaries', label: 'Salaires et charges sociales' },
-    { value: 'utilities', label: 'Services (eau, électricité, internet)' },
-    { value: 'supplies', label: 'Fournitures et matériel' },
-    { value: 'maintenance', label: 'Maintenance et réparations' },
-    { value: 'other', label: 'Autres dépenses' },
+    { value: "salaries", label: "Salaires et charges sociales" },
+    { value: "utilities", label: "Services (eau, électricité, internet)" },
+    { value: "supplies", label: "Fournitures et matériel" },
+    { value: "maintenance", label: "Maintenance et réparations" },
+    { value: "other", label: "Autres dépenses" },
   ];
 
   return (
@@ -217,7 +251,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
           </label>
           <textarea
             value={formData.description}
-            onChange={handleChange('description')}
+            onChange={handleChange("description")}
             placeholder="Description détaillée de la dépense..."
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -235,18 +269,18 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
             min="0"
             step="0.01"
             value={formData.amount.toString()}
-            onChange={handleChange('amount')}
+            onChange={handleChange("amount")}
             error={errors.amount}
             leftIcon={<DollarSign className="h-4 w-4" />}
             disabled={isLoading}
-            helperText={`Devise: ${currentSchool?.currency || 'CDF'}`}
+            helperText={`Devise: ${currentSchool?.currency || "CDF"}`}
           />
 
           <Input
             label="Date de dépense *"
             type="date"
             value={formData.expenseDate}
-            onChange={handleChange('expenseDate')}
+            onChange={handleChange("expenseDate")}
             error={errors.expenseDate}
             leftIcon={<Calendar className="h-4 w-4" />}
             disabled={isLoading}
@@ -258,7 +292,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
             label="Catégorie *"
             options={categoryOptions}
             value={formData.category}
-            onChange={handleSelectChange('category')}
+            onChange={handleSelectChange("category")}
             error={errors.category}
             disabled={isLoading}
           />
@@ -267,7 +301,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
             label="Fournisseur"
             placeholder="Nom du fournisseur ou prestataire"
             value={formData.supplier}
-            onChange={handleChange('supplier')}
+            onChange={handleChange("supplier")}
             error={errors.supplier}
             leftIcon={<Building className="h-4 w-4" />}
             disabled={isLoading}
@@ -313,7 +347,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
             <div className="flex items-center">
               <FileText className="h-5 w-5 text-green-600 mr-3" />
               <div>
-                <p className="font-medium text-green-900">{uploadedFile.name}</p>
+                <p className="font-medium text-green-900">
+                  {uploadedFile.name}
+                </p>
                 <p className="text-sm text-green-700">
                   {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
@@ -327,8 +363,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
             <div className="flex items-center">
               <FileText className="h-5 w-5 text-blue-600 mr-3" />
               <div>
-                <p className="font-medium text-blue-900">Justificatif existant</p>
-                <p className="text-sm text-blue-700">Un justificatif est déjà associé</p>
+                <p className="font-medium text-blue-900">
+                  Justificatif existant
+                </p>
+                <p className="text-sm text-blue-700">
+                  Un justificatif est déjà associé
+                </p>
               </div>
             </div>
           </div>
@@ -336,16 +376,34 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
       </div>
 
       {/* Informations sur les écritures comptables */}
-      {!expense && (
+      {false && !expense && (
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <div className="flex items-start">
             <FileText className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Écritures comptables automatiques :</p>
+              <p className="font-medium mb-1">
+                Écritures comptables automatiques :
+              </p>
               <ul className="space-y-1 text-xs">
-                <li>• <strong>Débit Charges</strong> : {formData.amount > 0 ? `${formData.amount.toLocaleString()} ${currentSchool?.currency}` : 'Montant de la dépense'}</li>
-                <li>• <strong>Crédit Caisse (5111)</strong> : {formData.amount > 0 ? `${formData.amount.toLocaleString()} ${currentSchool?.currency}` : 'Montant de la dépense'}</li>
-                <li>• Le compte de charge dépend de la catégorie sélectionnée</li>
+                <li>
+                  • <strong>Débit Charges</strong> :{" "}
+                  {formData.amount > 0
+                    ? `${formData.amount.toLocaleString()} ${
+                        currentSchool?.currency
+                      }`
+                    : "Montant de la dépense"}
+                </li>
+                <li>
+                  • <strong>Crédit Caisse (5111)</strong> :{" "}
+                  {formData.amount > 0
+                    ? `${formData.amount.toLocaleString()} ${
+                        currentSchool?.currency
+                      }`
+                    : "Montant de la dépense"}
+                </li>
+                <li>
+                  • Le compte de charge dépend de la catégorie sélectionnée
+                </li>
               </ul>
             </div>
           </div>
@@ -353,7 +411,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
       )}
 
       {/* Avertissement justificatif */}
-      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+      {/* <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
         <div className="flex items-start">
           <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
           <div className="text-sm text-yellow-800">
@@ -366,7 +424,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
             </ul>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Actions */}
       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
@@ -383,7 +441,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSuccess, onCancel 
           loading={isLoading}
           disabled={isLoading || formData.amount <= 0}
         >
-          {expense ? 'Modifier' : 'Enregistrer'} la Dépense
+          {expense ? "Modifier" : "Enregistrer"} la Dépense
         </Button>
       </div>
     </form>

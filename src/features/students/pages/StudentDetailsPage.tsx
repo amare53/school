@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   BookOpen,
   School,
+  Plus,
 } from "lucide-react";
 import {
   Card,
@@ -26,19 +27,30 @@ import {
 import { Button } from "../../../shared/components/ui/Button";
 import { Badge } from "../../../shared/components/ui/Badge";
 import { Table, type Column } from "../../../shared/components/ui/Table";
-import { useApiPlatformCollection, useAuth } from "../../../shared/hooks";
-import { useFakeDataStore } from "../../../shared/stores/fakeData";
-import { formatDate } from "../../../shared/utils";
+import { Modal } from "../../../shared/components/ui/Modal";
+import {
+  useApiPlatformCollection,
+  useAuth,
+  useModal,
+} from "../../../shared/hooks";
+import { formatDate, formatCurrency } from "../../../shared/utils";
 import {
   STUDENT_STATUS_LABELS,
   STATUS_COLORS,
 } from "../../../shared/constants";
 import { studentsApi } from "@/shared/services/api";
+import { PaymentForm } from "../../payments/components/PaymentForm";
 
 const StudentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentSchool } = useAuth();
+  const {
+    isOpen: isPaymentOpen,
+    open: openPayment,
+    close: closePayment,
+  } = useModal();
+
   const { data: student, loading } = useApiPlatformCollection(
     (id) => studentsApi.getItem(id),
     id,
@@ -49,20 +61,11 @@ const StudentDetailsPage: React.FC = () => {
     }
   );
 
-  const {
-    getStudentsBySchool,
-    getEnrollmentsByStudent,
-    getClassesBySchool,
-    getAcademicYearsBySchool,
-  } = useFakeDataStore();
-
-  // Récupérer l'élève
-  const schoolId = currentSchool?.id || "";
-
-  // Récupérer les données liées
-  const enrollments = getEnrollmentsByStudent(id || "");
-  const classes = getClassesBySchool(schoolId);
-  const academicYears = getAcademicYearsBySchool(schoolId);
+  // TODO: Remplacer par des appels API réels
+  const enrollments: any[] = [];
+  const classes: any[] = [];
+  const academicYears: any[] = [];
+  const feeTypes: any[] = [];
 
   if (!student) {
     return (
@@ -111,6 +114,83 @@ const StudentDetailsPage: React.FC = () => {
     }
 
     return age;
+  };
+
+  // Calculer les frais en souffrance pour chaque type de frais mensuel
+  const getOutstandingFees = () => {
+    const currentDate = new Date();
+    const outstandingFees: Array<{
+      feeType: any;
+      monthsOwed: number;
+      totalAmount: number;
+      lastPaidMonth: string | null;
+      nextDueMonth: string;
+    }> = [];
+
+    // Pour chaque type de frais mensuel
+    const monthlyFeeTypes = feeTypes.filter(
+      (ft) => ft.billingFrequency === "monthly"
+    );
+
+    monthlyFeeTypes.forEach((feeType) => {
+      // Trouver le dernier paiement pour ce type de frais
+      const feePayments = student?.payments
+        ?.filter((p) => p.feeTypeId === feeType.id)
+        .sort(
+          (a, b) =>
+            new Date(b.paymentDate).getTime() -
+            new Date(a.paymentDate).getTime()
+        );
+
+      const lastPayment = feePayments[0];
+      let lastPaidDate: Date;
+      let lastPaidMonth: string | null = null;
+
+      if (lastPayment) {
+        lastPaidDate = new Date(lastPayment.paymentDate);
+        lastPaidMonth = lastPaidDate.toLocaleDateString("fr-FR", {
+          month: "long",
+          year: "numeric",
+        });
+      } else {
+        // Si aucun paiement, commencer depuis l'inscription de l'élève
+        lastPaidDate = new Date(student.createdAt);
+        lastPaidDate.setMonth(lastPaidDate.getMonth() - 1); // Commencer le mois précédent
+      }
+
+      // Calculer les mois en souffrance
+      const nextDueDate = new Date(lastPaidDate);
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+
+      let monthsOwed = 0;
+      const tempDate = new Date(nextDueDate);
+
+      while (tempDate <= currentDate) {
+        monthsOwed++;
+        tempDate.setMonth(tempDate.getMonth() + 1);
+      }
+
+      if (monthsOwed > 0) {
+        outstandingFees.push({
+          feeType,
+          monthsOwed,
+          totalAmount: monthsOwed * feeType.amount,
+          lastPaidMonth,
+          nextDueMonth: nextDueDate.toLocaleDateString("fr-FR", {
+            month: "long",
+            year: "numeric",
+          }),
+        });
+      }
+    });
+
+    return outstandingFees;
+  };
+
+  const outstandingFees = getOutstandingFees();
+
+  const handlePayment = () => {
+    openPayment();
   };
 
   // Colonnes pour l'historique des inscriptions
@@ -165,6 +245,58 @@ const StudentDetailsPage: React.FC = () => {
     },
   ];
 
+  // Colonnes pour les paiements récents
+  const paymentColumns: Column<any>[] = [
+    {
+      key: "paymentNumber",
+      title: "N° Paiement",
+      render: (paymentNumber) => (
+        <div className="font-medium text-gray-900">{paymentNumber}</div>
+      ),
+    },
+    {
+      key: "feeType",
+      title: "Type de Frais",
+      render: (_, payment) => {
+        return (
+          <div className="text-sm text-gray-900">
+            {payment?.feeType?.name || "Type inconnu"}
+          </div>
+        );
+      },
+    },
+    {
+      key: "amount",
+      title: "Montant",
+      render: (amount) => (
+        <div className="font-medium text-green-600">
+          {formatCurrency(amount, currentSchool?.currency)}
+        </div>
+      ),
+    },
+    {
+      key: "paymentDate",
+      title: "Date",
+      render: (date) => formatDate(date),
+    },
+    {
+      key: "paymentMethod",
+      title: "Méthode",
+      render: (method) => (
+        <Badge variant="info" size="sm">
+          {method === "cash"
+            ? "Espèces"
+            : method === "bank_transfer"
+            ? "Virement"
+            : method === "check"
+            ? "Chèque"
+            : method === "mobile_money"
+            ? "Mobile Money"
+            : method}
+        </Badge>
+      ),
+    },
+  ];
   return (
     <div className="space-y-6">
       {/* Header avec navigation */}
@@ -183,11 +315,18 @@ const StudentDetailsPage: React.FC = () => {
         <div className="flex space-x-2">
           <Button
             variant="outline"
+            onClick={handlePayment}
+            leftIcon={<CreditCard className="h-4 w-4" />}
+          >
+            Nouveau Paiement
+          </Button>
+          {/* <Button
+            variant="outline"
             onClick={() => navigate(`/students/${student.id}/enroll`)}
             leftIcon={<UserCheck className="h-4 w-4" />}
           >
             Inscrire
-          </Button>
+          </Button> */}
           <Button
             onClick={() => navigate(`/students/${student.id}/edit`)}
             leftIcon={<Edit className="h-4 w-4" />}
@@ -359,8 +498,52 @@ const StudentDetailsPage: React.FC = () => {
         </Card>
       </div>
 
+      {/* Informations financières */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Paiements récents */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <CreditCard className="h-5 w-5 mr-2" />
+                Paiements Récents
+              </div>
+              <Button
+                size="sm"
+                onClick={handlePayment}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Nouveau Paiement
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!loading && student?.payments?.length > 0 ? (
+              <Table
+                data={student?.payments?.slice(-5).reverse()}
+                columns={paymentColumns}
+                loading={loading}
+                emptyMessage="Aucun paiement trouvé"
+              />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-sm">Aucun paiement enregistré</p>
+                <Button
+                  className="mt-4"
+                  onClick={handlePayment}
+                  leftIcon={<Plus className="h-4 w-4" />}
+                >
+                  Enregistrer un Paiement
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Historique académique */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center">
@@ -400,46 +583,89 @@ const StudentDetailsPage: React.FC = () => {
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
-      {/* Informations financières */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      {/* Frais en souffrance */}
+      {outstandingFees.length > 0 && (
+        <Card className="border-orange-200 bg-orange-50">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="h-5 w-5 mr-2" />
-              Factures
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-6 text-gray-500">
-              <FileText className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">Aucune facture</p>
-              <p className="text-xs text-gray-400">
-                Les factures apparaîtront après inscription
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-orange-900">
               <CreditCard className="h-5 w-5 mr-2" />
-              Paiements
+              Frais en Souffrance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-6 text-gray-500">
-              <CreditCard className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">Aucun paiement</p>
-              <p className="text-xs text-gray-400">
-                Les paiements apparaîtront après facturation
-              </p>
+            <div className="space-y-3">
+              {outstandingFees.map((fee, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200"
+                >
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      {fee.feeType.name}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {fee.monthsOwed} mois en retard
+                      {fee.lastPaidMonth &&
+                        ` (dernier paiement: ${fee.lastPaidMonth})`}
+                    </div>
+                    <div className="text-xs text-orange-600">
+                      Prochain mois dû: {fee.nextDueMonth}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-orange-600">
+                      {formatCurrency(fee.totalAmount, currentSchool?.currency)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatCurrency(
+                        fee.feeType.amount,
+                        currentSchool?.currency
+                      )}{" "}
+                      × {fee.monthsOwed}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-3 border-t border-orange-200">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-orange-900">
+                    Total en souffrance:
+                  </span>
+                  <span className="text-xl font-bold text-orange-600">
+                    {formatCurrency(
+                      outstandingFees.reduce(
+                        (sum, fee) => sum + fee.totalAmount,
+                        0
+                      ),
+                      currentSchool?.currency
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* Modal de paiement */}
+      <Modal
+        isOpen={isPaymentOpen}
+        onClose={closePayment}
+        title="Nouveau Paiement"
+        size="lg"
+      >
+        <PaymentForm
+          preselectedStudentId={student.id}
+          onSuccess={() => {
+            closePayment();
+            // Recharger la page pour voir le nouveau paiement
+            window.location.reload();
+          }}
+          onCancel={closePayment}
+        />
+      </Modal>
     </div>
   );
 };

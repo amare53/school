@@ -15,7 +15,6 @@ import {
 } from "../../../shared/components/ui/Card";
 import { Button } from "../../../shared/components/ui/Button";
 import { Badge } from "../../../shared/components/ui/Badge";
-import { useFakeDataStore } from "../../../shared/stores/fakeData";
 import { AcademicYearsList } from "../components/AcademicYearsList";
 import { LevelsList } from "../components/LevelsList";
 import { SectionsList } from "../components/SectionsList";
@@ -26,23 +25,16 @@ type TabType = "years" | "levels" | "sections" | "classes";
 
 const AcademicStructurePage: React.FC = () => {
   const { user, currentSchool } = useAuth();
-  const {
-    getAcademicYearsBySchool,
-    getLevelsBySchool,
-    getSectionsBySchool,
-    getClassesBySchool,
-  } = useFakeDataStore();
   const [activeTab, setActiveTab] = useState<TabType>("years");
 
-  // Récupérer les données pour l'école courante
-  const schoolId = currentSchool?.id || "";
-  const academicYears = getAcademicYearsBySchool(schoolId);
-  const levels = getLevelsBySchool(schoolId);
-  const sections = getSectionsBySchool(schoolId);
-  const classes = getClassesBySchool(schoolId);
+  // TODO: Remplacer par des appels API réels
+  const academicYears: any[] = [];
+  const levels: any[] = [];
+  const sections: any[] = [];
+  const classes: any[] = [];
 
   // Vérifier les permissions
-  if (user?.role !== "school_manager" && user?.role !== "platform_admin") {
+  if (user?.role !== "school_manager") {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -52,7 +44,7 @@ const AcademicStructurePage: React.FC = () => {
           Accès refusé
         </h2>
         <p className="text-gray-600">
-          Vous n'avez pas les permissions pour gérer la structure académique.
+          Seuls les gestionnaires d'école peuvent gérer la structure académique.
         </p>
       </div>
     );

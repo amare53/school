@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Plus,
   Search,
-  Building,
+  UserCog,
   Users,
   Calendar,
   Settings,
@@ -22,34 +22,38 @@ import { Badge } from "../../../shared/components/ui/Badge";
 import { Table, type Column } from "../../../shared/components/ui/Table";
 import { Modal } from "../../../shared/components/ui/Modal";
 import {
+  useApiPlatformCollection,
   useAuth,
   useModal,
-  useApiCall,
-  useApiPlatformCollection,
 } from "../../../shared/hooks";
 import { formatDate } from "../../../shared/utils";
-import { SchoolForm } from "../components/SchoolForm";
-import type { School } from "../../../shared/types";
-import { USER_ROLES } from "@/shared/constants";
-import { schoolsApi } from "@/shared/services/api";
+import { USER_ROLE_LABELS, USER_ROLES } from "../../../shared/constants";
+import { SchoolManagerForm } from "../components/SchoolManagerForm";
+import type { User } from "../../../shared/types";
+import { usersApi } from "@/shared/services/api";
 
-const SchoolsListPage: React.FC = () => {
+const SchoolManagersListPage: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
+  const [selectedManager, setSelectedManager] = useState<User | null>(null);
   const { isOpen: isFormOpen, open: openForm, close: closeForm } = useModal();
   const { isOpen: isViewOpen, open: openView, close: closeView } = useModal();
+
+  // TODO: Remplacer par des appels API réels
+  const schools: any[] = [];
+
   const {
-    data: allSchools,
+    data: schoolManagers,
     loading,
     pagination,
     goToPage,
     sort,
   } = useApiPlatformCollection(
-    (params) => schoolsApi.getCollection(params),
+    (params) => usersApi.getCollection(params),
     {
       page: 1,
       itemsPerPage: 20,
+      role: USER_ROLES.SCHOOL_MANAGER,
       order: { createdAt: "desc" },
     },
     {
@@ -58,51 +62,38 @@ const SchoolsListPage: React.FC = () => {
     }
   );
 
-  // Filtrer les écoles accessibles selon le rôle
-  const getAccessibleSchools = () => {
-    if (user?.role === USER_ROLES.PLATFORM_ADMIN) {
-      return allSchools;
-    } else if (user?.role === "school_manager") {
-      const schoolIds =
-        user.assignedSchools || (user.schoolId ? [user.schoolId] : []);
-      return allSchools.filter((school) => schoolIds.includes(school.id));
-    }
-    return [];
-  };
-
-  const accessibleSchools = getAccessibleSchools();
-
-  const filteredSchools = allSchools.filter(
-    (school) =>
-      school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      school.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredManagers = schoolManagers.filter(
+    (manager) =>
+      manager.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      manager.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      manager.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateSchool = () => {
-    setSelectedSchool(null);
+  const handleCreateManager = () => {
+    setSelectedManager(null);
     openForm();
   };
 
-  const handleEditSchool = (school: School) => {
-    setSelectedSchool(school);
+  const handleEditManager = (manager: User) => {
+    setSelectedManager(manager);
     openForm();
   };
 
-  const handleViewSchool = (school: School) => {
-    setSelectedSchool(school);
+  const handleViewManager = (manager: User) => {
+    setSelectedManager(manager);
     openView();
   };
 
   const getStatusBadge = (status: string) => {
     const variants = {
       active: "success",
-      suspended: "warning",
+      inactive: "warning",
       archived: "default",
     } as const;
 
     const labels = {
       active: "Actif",
-      suspended: "Suspendu",
+      inactive: "Inactif",
       archived: "Archivé",
     };
 
@@ -113,49 +104,47 @@ const SchoolsListPage: React.FC = () => {
     );
   };
 
-  const getPlanBadge = (plan: string) => {
-    const variants = {
-      basic: "default",
-      standard: "info",
-      premium: "success",
-    } as const;
-
-    return (
-      <Badge
-        variant={variants[plan as keyof typeof variants] || "default"}
-        className="capitalize"
-      >
-        {plan}
-      </Badge>
-    );
-  };
-
-  const columns: Column<School>[] = [
+  const columns: Column<User>[] = [
     {
       key: "name",
-      title: "École",
+      title: "School Manager",
       sortable: true,
-      render: (_, school) => (
+      render: (_, manager) => (
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Building className="h-5 w-5 text-blue-600" />
+            <UserCog className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">{school.name}</div>
-            <div className="text-sm text-gray-500">{school.email}</div>
+            <div className="font-medium text-gray-900">
+              {manager.firstName} {manager.lastName}
+            </div>
+            <div className="text-sm text-gray-500">{manager.email}</div>
           </div>
         </div>
       ),
     },
-    // {
-    //   key: "address",
-    //   title: "Adresse",
-    //   render: (address) => (
-    //     <div className="text-sm text-gray-600 max-w-xs truncate">
-    //       {address || "Non renseignée"}
-    //     </div>
-    //   ),
-    // },
+    {
+      key: "assignedSchools",
+      title: "Écoles Assignées",
+      render: (_, manager) => {
+        const assignedSchools =
+          manager.managedSchools ||
+          (manager.schoolId ? [manager.schoolId] : []);
+        const schoolNames = assignedSchools.map((s) => s.name);
+
+        return (
+          <div>
+            <div className="font-medium text-gray-900">
+              {assignedSchools.length} école(s)
+            </div>
+            <div className="text-sm text-gray-500">
+              {schoolNames.slice(0, 2).join(", ")}
+              {schoolNames.length > 2 && ` +${schoolNames.length - 2} autres`}
+            </div>
+          </div>
+        );
+      },
+    },
     {
       key: "phone",
       title: "Téléphone",
@@ -164,53 +153,51 @@ const SchoolsListPage: React.FC = () => {
       ),
     },
     {
-      key: "subscriptionPlan",
-      title: "Plan",
-      render: (plan) => getPlanBadge(plan),
-    },
-    {
       key: "status",
       title: "Statut",
       render: (status) => getStatusBadge(status),
     },
     {
+      key: "lastLogin",
+      title: "Dernière Connexion",
+      render: (lastLogin) => (
+        <div className="text-sm text-gray-600">
+          {lastLogin ? formatDate(lastLogin, "dd/MM/yyyy HH:mm") : "Jamais"}
+        </div>
+      ),
+    },
+    {
       key: "createdAt",
-      title: "Créée le",
+      title: "Créé le",
       sortable: true,
       render: (date) => formatDate(date),
     },
     {
       key: "actions",
       title: "Actions",
-      render: (_, school) => (
+      render: (_, manager) => (
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleViewSchool(school)}
+            onClick={() => handleViewManager(manager)}
           >
             <Eye className="h-4 w-4" />
           </Button>
-          {(user.role === USER_ROLES.PLATFORM_ADMIN ||
-            (user.role === "school_manager" &&
-              school.id === user.schoolId)) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEditSchool(school)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          )}
-          {user.role === USER_ROLES.PLATFORM_ADMIN && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:text-red-700"
-            >
-              <Archive className="h-4 w-4" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEditManager(manager)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-600 hover:text-red-700"
+          >
+            <Archive className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },
@@ -221,13 +208,14 @@ const SchoolsListPage: React.FC = () => {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Building className="w-8 h-8 text-red-600" />
+          <UserCog className="w-8 h-8 text-red-600" />
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
           Accès refusé
         </h2>
         <p className="text-gray-600">
-          Seuls les administrateurs de la plateforme peuvent gérer les écoles.
+          Seuls les administrateurs de la plateforme peuvent gérer les school
+          managers.
         </p>
       </div>
     );
@@ -239,24 +227,18 @@ const SchoolsListPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {user.role === USER_ROLES.PLATFORM_ADMIN
-              ? "Gestion des Écoles"
-              : "Mes Écoles"}
+            Gestion des School Managers
           </h1>
           <p className="text-gray-600">
-            {user.role === USER_ROLES.PLATFORM_ADMIN
-              ? "Gérez toutes les écoles de la plateforme"
-              : "Gérez vos écoles assignées"}
+            Gérez les gestionnaires d'écoles de la plateforme
           </p>
         </div>
-        {user.role === USER_ROLES.PLATFORM_ADMIN && (
-          <Button
-            onClick={handleCreateSchool}
-            leftIcon={<Plus className="h-4 w-4" />}
-          >
-            Nouvelle École
-          </Button>
-        )}
+        <Button
+          onClick={handleCreateManager}
+          leftIcon={<Plus className="h-4 w-4" />}
+        >
+          Nouveau School Manager
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -265,16 +247,14 @@ const SchoolsListPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Building className="h-6 w-6 text-blue-600" />
+                <UserCog className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">
-                  {user.role === USER_ROLES.PLATFORM_ADMIN
-                    ? "Total Écoles"
-                    : "Mes Écoles"}
+                  Total Managers
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {accessibleSchools.length}
+                  {schoolManagers.length}
                 </p>
               </div>
             </div>
@@ -288,14 +268,9 @@ const SchoolsListPage: React.FC = () => {
                 <Users className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Écoles Actives
-                </p>
+                <p className="text-sm font-medium text-gray-600">Actifs</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {
-                    accessibleSchools.filter((s) => s.status === "active")
-                      .length
-                  }
+                  {schoolManagers.filter((m) => m.status === "active").length}
                 </p>
               </div>
             </div>
@@ -309,11 +284,19 @@ const SchoolsListPage: React.FC = () => {
                 <Calendar className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Suspendues</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Connectés Récemment
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {
-                    accessibleSchools.filter((s) => s.status === "suspended")
-                      .length
+                    schoolManagers.filter((m) => {
+                      if (!m.lastLogin) return false;
+                      const lastLogin = new Date(m.lastLogin);
+                      const weekAgo = new Date(
+                        Date.now() - 7 * 24 * 60 * 60 * 1000
+                      );
+                      return lastLogin > weekAgo;
+                    }).length
                   }
                 </p>
               </div>
@@ -328,11 +311,13 @@ const SchoolsListPage: React.FC = () => {
                 <Settings className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Premium</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Multi-Écoles
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {
-                    accessibleSchools.filter(
-                      (s) => s.subscriptionPlan === "premium"
+                    schoolManagers.filter(
+                      (m) => (m.assignedSchools?.length || 0) > 1
                     ).length
                   }
                 </p>
@@ -348,7 +333,7 @@ const SchoolsListPage: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="flex-1">
               <Input
-                placeholder="Rechercher une école..."
+                placeholder="Rechercher un school manager..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 leftIcon={<Search className="h-4 w-4" />}
@@ -358,63 +343,68 @@ const SchoolsListPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Schools Table */}
+      {/* Managers Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Écoles ({filteredSchools.length})</CardTitle>
+          <CardTitle>
+            Liste des School Managers ({filteredManagers.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Table
-            data={filteredSchools}
+            data={filteredManagers}
             columns={columns}
-            loading={loading}
-            emptyMessage="Aucune école trouvée"
-            pagination={pagination}
-            onPageChange={goToPage}
-            onSort={(key, direction) => sort(key, direction)}
+            loading={false}
+            emptyMessage="Aucun school manager trouvé"
           />
         </CardContent>
       </Card>
 
       {/* Modals */}
-      {(user.role === USER_ROLES.PLATFORM_ADMIN ||
-        (user.role === "school_manager" && selectedSchool)) && (
-        <Modal
-          isOpen={isFormOpen}
-          onClose={closeForm}
-          title={selectedSchool ? "Modifier l'École" : "Nouvelle École"}
-          size="lg"
-        >
-          <SchoolForm
-            school={selectedSchool}
-            onSuccess={() => {
-              closeForm();
-              window.location.reload();
-            }}
-            onCancel={closeForm}
-          />
-        </Modal>
-      )}
+      <Modal
+        isOpen={isFormOpen}
+        onClose={closeForm}
+        title={
+          selectedManager
+            ? "Modifier le School Manager"
+            : "Nouveau School Manager"
+        }
+        size="lg"
+      >
+        <SchoolManagerForm
+          manager={selectedManager}
+          onSuccess={() => {
+            closeForm();
+          }}
+          onCancel={closeForm}
+        />
+      </Modal>
 
       <Modal
         isOpen={isViewOpen}
         onClose={closeView}
-        title="Détails de l'École"
+        title="Détails du School Manager"
         size="lg"
       >
-        {selectedSchool && (
+        {selectedManager && (
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Building className="h-8 w-8 text-blue-600" />
+                <UserCog className="h-8 w-8 text-blue-600" />
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-gray-900">
-                  {selectedSchool.name}
+                  {selectedManager.firstName} {selectedManager.lastName}
                 </h3>
                 <div className="flex items-center space-x-2 mt-1">
-                  {getStatusBadge(selectedSchool.status)}
-                  {getPlanBadge(selectedSchool.subscriptionPlan)}
+                  {getStatusBadge(selectedManager.status)}
+                  <Badge variant="info">
+                    {
+                      USER_ROLE_LABELS[
+                        selectedManager.role as keyof typeof USER_ROLE_LABELS
+                      ]
+                    }
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -427,36 +417,51 @@ const SchoolsListPage: React.FC = () => {
                 <div className="space-y-2 text-sm">
                   <p>
                     <span className="text-gray-600">Email:</span>{" "}
-                    {selectedSchool.email}
+                    {selectedManager.email}
                   </p>
                   <p>
                     <span className="text-gray-600">Téléphone:</span>{" "}
-                    {selectedSchool.phone || "Non renseigné"}
+                    {selectedManager.phone || "Non renseigné"}
                   </p>
                   <p>
-                    <span className="text-gray-600">Adresse:</span>{" "}
-                    {selectedSchool.address || "Non renseignée"}
+                    <span className="text-gray-600">Dernière connexion:</span>{" "}
+                    {selectedManager.lastLogin
+                      ? formatDate(
+                          selectedManager.lastLogin,
+                          "dd/MM/yyyy HH:mm"
+                        )
+                      : "Jamais"}
                   </p>
                 </div>
               </div>
 
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">
-                  Informations Système
+                  Écoles Assignées
                 </h4>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="text-gray-600">Créée le:</span>{" "}
-                    {formatDate(selectedSchool.createdAt)}
-                  </p>
-                  <p>
-                    <span className="text-gray-600">Plan:</span>{" "}
-                    {selectedSchool.subscriptionPlan}
-                  </p>
-                  <p>
-                    <span className="text-gray-600">Statut:</span>{" "}
-                    {selectedSchool.status}
-                  </p>
+                <div className="space-y-2">
+                  {(
+                    selectedManager.assignedSchools || [
+                      selectedManager.schoolId,
+                    ]
+                  )
+                    .filter(Boolean)
+                    .map((schoolId) => {
+                      const school = schools.find((s) => s.id === schoolId);
+                      return school ? (
+                        <div
+                          key={schoolId}
+                          className="flex items-center space-x-2"
+                        >
+                          <Badge variant="info" size="sm">
+                            {school.name}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            ({school.subscriptionPlan})
+                          </span>
+                        </div>
+                      ) : null;
+                    })}
                 </div>
               </div>
             </div>
@@ -468,7 +473,7 @@ const SchoolsListPage: React.FC = () => {
               <Button
                 onClick={() => {
                   closeView();
-                  handleEditSchool(selectedSchool);
+                  handleEditManager(selectedManager);
                 }}
               >
                 Modifier
@@ -481,4 +486,4 @@ const SchoolsListPage: React.FC = () => {
   );
 };
 
-export { SchoolsListPage };
+export { SchoolManagersListPage };

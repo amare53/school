@@ -22,7 +22,6 @@ import {
   useAuth,
   useModal,
 } from "../../../shared/hooks";
-import { useFakeDataStore } from "../../../shared/stores/fakeData";
 import { formatCurrency } from "../../../shared/utils";
 import { FeeTypeForm } from "./FeeTypeForm";
 import type { FeeType } from "../../../shared/types";

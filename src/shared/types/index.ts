@@ -27,8 +27,9 @@ export type Gender = "male" | "female";
 // Entités de base
 export interface User {
   id: string;
-  schoolId: string;
-  school: School;
+  schoolId?: string; // Optionnel pour platform_admin
+  school?: School; // Optionnel pour platform_admin
+  assignedSchools?: string[]; // Pour school_manager qui peut gérer plusieurs écoles
   email: string;
   firstName: string;
   lastName: string;

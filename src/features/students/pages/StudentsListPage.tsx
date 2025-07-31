@@ -42,9 +42,6 @@ const StudentsListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-
-  const { isOpen: isFormOpen, open: openForm, close: closeForm } = useModal();
 
   // Hook pour la collection d'élèves avec API Platform
   const {
@@ -61,7 +58,7 @@ const StudentsListPage: React.FC = () => {
     {
       page: 1,
       itemsPerPage: 20,
-      order: { lastName: "asc" },
+      order: { createdAt: "desc" },
     },
     {
       cacheKey: "students_list",
@@ -85,39 +82,8 @@ const StudentsListPage: React.FC = () => {
     filter({ section: value || undefined });
   };
 
-  const handleCreateStudent = () => {
-    setSelectedStudent(null);
-    openForm();
-  };
-
-  const handleEditStudent = (student: Student) => {
-    setSelectedStudent(student);
-    navigate(`/students/${student.id}/edit`);
-  };
-
   const handleViewStudent = (student: Student) => {
     navigate(`/students/${student.id}`);
-  };
-
-  const handleEnrollStudent = (student: Student) => {
-    navigate(`/students/${student.id}/enroll`);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variant =
-      STATUS_COLORS.STUDENT[status as keyof typeof STATUS_COLORS.STUDENT] ||
-      "bg-gray-100 text-gray-800";
-    const label =
-      STUDENT_STATUS_LABELS[status as keyof typeof STUDENT_STATUS_LABELS] ||
-      status;
-
-    return (
-      <span
-        className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${variant}`}
-      >
-        {label}
-      </span>
-    );
   };
 
   const columns: Column<Student>[] = [
@@ -183,18 +149,25 @@ const StudentsListPage: React.FC = () => {
     },
     {
       key: "currentClass",
-      title: "Classe Actuelle",
+      title: "Classe",
       render: (_, student) => (
         <div className="text-sm text-gray-600">
-          {/* À implémenter avec les inscriptions API */}
-          Non inscrit
+          {student?.enrollments?.length > 0
+            ? student?.enrollments[0]?.schoolClass?.level
+            : "Non inscrit"}
         </div>
       ),
     },
     {
-      key: "status",
-      title: "Statut",
-      render: (status) => getStatusBadge(status),
+      key: "currentClass",
+      title: "Section",
+      render: (_, student) => (
+        <div className="text-sm text-gray-600">
+          {student?.enrollments?.length > 0
+            ? student?.enrollments[0]?.schoolClass?.section?.name
+            : "Non inscrit"}
+        </div>
+      ),
     },
     {
       key: "actions",
@@ -208,22 +181,6 @@ const StudentsListPage: React.FC = () => {
             title="Voir les détails"
           >
             <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEnrollStudent(student)}
-            title="Inscrire en classe"
-          >
-            <UserCheck className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEditStudent(student)}
-            title="Modifier"
-          >
-            <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -267,7 +224,7 @@ const StudentsListPage: React.FC = () => {
           </p>
         </div>
         <Button
-          onClick={handleCreateStudent}
+          onClick={() => navigate(`/students/create`)}
           leftIcon={<Plus className="h-4 w-4" />}
         >
           Nouvel Élève
@@ -327,24 +284,6 @@ const StudentsListPage: React.FC = () => {
           />
         </CardContent>
       </Card>
-
-      {/* Modals */}
-      <Modal
-        isOpen={isFormOpen}
-        onClose={closeForm}
-        title={selectedStudent ? "Modifier l'Élève" : "Nouvel Élève"}
-        size="lg"
-      >
-        <StudentForm
-          student={selectedStudent}
-          onSuccess={() => {
-            closeForm();
-            // Recharger la liste après création/modification
-            updateParams({});
-          }}
-          onCancel={closeForm}
-        />
-      </Modal>
     </div>
   );
 };

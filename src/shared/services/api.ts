@@ -22,12 +22,6 @@ const createApiInstance = (): AxiosInstance => {
         config.headers.Authorization = `Bearer ${authToken}`;
       }
 
-      // Ajouter l'ID de l'école courante si disponible
-      const { currentSchool } = useAppStore.getState();
-      if (currentSchool?.id) {
-        config.headers["X-School-ID"] = currentSchool.id;
-      }
-
       return config;
     },
     (error) => {
@@ -331,16 +325,16 @@ export class StudentsApiService extends BaseApiService {
     return response.data;
   }
 
-  // private buildQueryParams(params: Record<string, any>): string {
-  //   const searchParams = new URLSearchParams();
-  //   Object.entries(params).forEach(([key, value]) => {
-  //     if (value !== undefined && value !== null && value !== "") {
-  //       searchParams.append(key, String(value));
-  //     }
-  //   });
-  //   const queryString = searchParams.toString();
-  //   return queryString ? `?${queryString}` : "";
-  // }
+  static QueryParams(params: Record<string, any>): string {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        searchParams.append(key, String(value));
+      }
+    });
+    const queryString = searchParams.toString();
+    return queryString ? `?${queryString}` : "";
+  }
 }
 
 export class PaymentsApiService extends BaseApiService {
@@ -548,20 +542,18 @@ export class ReportsApiService {
     return response.data;
   }
 
-  async getClassPaymentReport(
-    classId: string,
-    params: {
-      sortBy?: string;
-      includeDetails?: boolean;
-    } = {}
-  ): Promise<any> {
+  async getClassPaymentReport(params: {
+    schoolClass: string;
+    month: number;
+    academicYear: string;
+  }): Promise<any> {
     const queryParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value) queryParams.append(key, String(value));
     });
 
     const response = await api.get(
-      `/reports/class-payments/${classId}?${queryParams.toString()}`
+      `/reports/payments?${queryParams.toString()}`
     );
     return response.data;
   }
@@ -587,13 +579,13 @@ export const studentsApi = new StudentsApiService();
 export const usersApi = new BaseApiService("/users");
 export const schoolsApi = new BaseApiService("/schools");
 export const academicYearsApi = new BaseApiService("/academic_years");
-export const levelsApi = new BaseApiService("/levels");
 export const sectionsApi = new BaseApiService("/sections");
 export const classesApi = new BaseApiService("/school_classes");
 export const paymentsApi = new PaymentsApiService();
 export const feeTypesApi = new BaseApiService("/fee_types");
 export const expensesApi = new ExpensesApiService();
 export const accountingEntriesApi = new BaseApiService("/accounting_entries");
+export const enrollmentApi = new BaseApiService("/enrollments");
 export const reportsApi = new ReportsApiService();
 
 // Utilitaires pour les appels API Platform

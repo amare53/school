@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Building, Mail, Phone, MapPin, CreditCard } from 'lucide-react';
-import { Button } from '../../../shared/components/ui/Button';
-import { Input } from '../../../shared/components/ui/Input';
-import { Select } from '../../../shared/components/ui/Select';
-import { useUI } from '../../../shared/hooks';
-import { useSchools } from '../../../shared/hooks';
-import { schoolSchema, type SchoolFormData } from '../../../shared/validations';
-import type { School } from '../../../shared/types';
+import React, { useState, useEffect } from "react";
+import { Building, Mail, Phone, MapPin, CreditCard } from "lucide-react";
+import { Button } from "../../../shared/components/ui/Button";
+import { Input } from "../../../shared/components/ui/Input";
+import { Select } from "../../../shared/components/ui/Select";
+import { useUI } from "../../../shared/hooks";
+import { schoolSchema, type SchoolFormData } from "../../../shared/validations";
+import type { School } from "../../../shared/types";
+import { useAuth } from "@/shared/stores";
+import { schoolsApi } from "@/shared/services/api";
 
 interface SchoolFormProps {
   school?: School | null;
@@ -14,51 +15,70 @@ interface SchoolFormProps {
   onCancel: () => void;
 }
 
-const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) => {
-  const { addSchool, updateSchool } = useSchools();
+const SchoolForm: React.FC<SchoolFormProps> = ({
+  school,
+  onSuccess,
+  onCancel,
+}) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState<SchoolFormData>({
-    name: '',
-    address: '',
-    phone: '',
-    email: '',
-    subscriptionPlan: 'basic',
-    currency: 'CDF',
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    subscriptionPlan: "basic",
+    currency: "CDF",
   });
   const [errors, setErrors] = useState<Partial<SchoolFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const { showNotification } = useUI();
 
+  // Vérifier les permissions
+  if (
+    user?.role === "school_manager" &&
+    school &&
+    school.id !== user.schoolId
+  ) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600">
+          Vous ne pouvez modifier que votre école assignée.
+        </p>
+      </div>
+    );
+  }
   // Initialiser le formulaire avec les données de l'école si en mode édition
   useEffect(() => {
     if (school) {
       setFormData({
         name: school.name,
-        address: school.address || '',
-        phone: school.phone || '',
-        email: school.email || '',
+        address: school.address || "",
+        phone: school.phone || "",
+        email: school.email || "",
         subscriptionPlan: school.subscriptionPlan,
         currency: school.currency,
       });
     }
   }, [school]);
 
-  const handleChange = (field: keyof SchoolFormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
-    // Effacer l'erreur quand l'utilisateur tape
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleChange =
+    (field: keyof SchoolFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+      // Effacer l'erreur quand l'utilisateur tape
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    };
 
-  const handleSelectChange = (field: keyof SchoolFormData) => (value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleSelectChange =
+    (field: keyof SchoolFormData) => (value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    };
 
   const validateForm = (): boolean => {
     try {
@@ -78,29 +98,37 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Vérifier les permissions avant soumission
+    if (user?.role === "school_manager" && !school) {
+      showNotification(
+        "Seuls les administrateurs de plateforme peuvent créer des écoles",
+        "error"
+      );
+      return;
+    }
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       if (school) {
-        // Mise à jour
-        updateSchool(school.id, formData);
+        // TODO: Appel API pour mise à jour
+        await schoolsApi.update(school.id, formData);
       } else {
-        // Création
-        addSchool(formData);
+        // TODO: Appel API pour création
+        await schoolsApi.create(formData);
       }
-      
-      const action = school ? 'modifiée' : 'créée';
-      showNotification(`École ${action} avec succès`, 'success');
-      
+
+      const action = school ? "modifiée" : "créée";
+      showNotification(`École ${action} avec succès`, "success");
+
       onSuccess();
-      
     } catch (error: any) {
       showNotification(
-        error.message || 'Erreur lors de la sauvegarde',
-        'error'
+        error.message || "Erreur lors de la sauvegarde",
+        "error"
       );
     } finally {
       setIsLoading(false);
@@ -108,14 +136,14 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
   };
 
   const subscriptionOptions = [
-    { value: 'basic', label: 'Basic - Fonctionnalités de base' },
-    { value: 'standard', label: 'Standard - Fonctionnalités avancées' },
-    { value: 'premium', label: 'Premium - Toutes les fonctionnalités' },
+    { value: "basic", label: "Basic - Fonctionnalités de base" },
+    { value: "standard", label: "Standard - Fonctionnalités avancées" },
+    { value: "premium", label: "Premium - Toutes les fonctionnalités" },
   ];
 
   const currencyOptions = [
-    { value: 'CDF', label: 'Franc Congolais (CDF)' },
-    { value: 'USD', label: 'Dollar Américain (USD)' },
+    { value: "CDF", label: "Franc Congolais (CDF)" },
+    { value: "USD", label: "Dollar Américain (USD)" },
   ];
 
   return (
@@ -131,7 +159,7 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
           label="Nom de l'école *"
           placeholder="Ex: École Primaire Les Palmiers"
           value={formData.name}
-          onChange={handleChange('name')}
+          onChange={handleChange("name")}
           error={errors.name}
           leftIcon={<Building className="h-4 w-4" />}
           disabled={isLoading}
@@ -142,7 +170,7 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
           type="email"
           placeholder="contact@ecole.com"
           value={formData.email}
-          onChange={handleChange('email')}
+          onChange={handleChange("email")}
           error={errors.email}
           leftIcon={<Mail className="h-4 w-4" />}
           disabled={isLoading}
@@ -152,7 +180,7 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
           label="Téléphone"
           placeholder="+221 33 123 45 67"
           value={formData.phone}
-          onChange={handleChange('phone')}
+          onChange={handleChange("phone")}
           error={errors.phone}
           leftIcon={<Phone className="h-4 w-4" />}
           disabled={isLoading}
@@ -162,7 +190,7 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
           label="Adresse complète"
           placeholder="123 Avenue de la Paix, Dakar"
           value={formData.address}
-          onChange={handleChange('address')}
+          onChange={handleChange("address")}
           error={errors.address}
           leftIcon={<MapPin className="h-4 w-4" />}
           disabled={isLoading}
@@ -180,19 +208,30 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
           label="Plan d'abonnement *"
           options={subscriptionOptions}
           value={formData.subscriptionPlan}
-          onChange={handleSelectChange('subscriptionPlan')}
+          onChange={handleSelectChange("subscriptionPlan")}
           error={errors.subscriptionPlan}
-          disabled={isLoading}
+          disabled={isLoading || user?.role === "school_manager"}
+          helperText={
+            user?.role === "school_manager"
+              ? "Seuls les administrateurs de plateforme peuvent modifier le plan"
+              : undefined
+          }
         />
 
         <Select
           label="Devise *"
           options={currencyOptions}
           value={formData.currency}
-          onChange={handleSelectChange('currency')}
+          onChange={handleSelectChange("currency")}
           error={errors.currency}
-          disabled={isLoading || !!school}
-          helperText={school ? "La devise ne peut pas être modifiée après création" : "Choisissez la devise pour toutes les transactions"}
+          disabled={isLoading || !!school || user?.role === "school_manager"}
+          helperText={
+            school
+              ? "La devise ne peut pas être modifiée après création"
+              : user?.role === "school_manager"
+              ? "Seuls les administrateurs de plateforme peuvent définir la devise"
+              : "Choisissez la devise pour toutes les transactions"
+          }
         />
       </div>
 
@@ -200,9 +239,15 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
       <div className="bg-gray-50 p-4 rounded-lg">
         <h4 className="font-medium text-gray-900 mb-2">Détails des Plans</h4>
         <div className="space-y-2 text-sm text-gray-600">
-          <div><strong>Basic:</strong> Gestion des élèves, facturation simple</div>
-          <div><strong>Standard:</strong> + Rapports avancés, gestion des dépenses</div>
-          <div><strong>Premium:</strong> + Analytics, API, support prioritaire</div>
+          <div>
+            <strong>Basic:</strong> Gestion des élèves, facturation simple
+          </div>
+          <div>
+            <strong>Standard:</strong> + Rapports avancés, gestion des dépenses
+          </div>
+          <div>
+            <strong>Premium:</strong> + Analytics, API, support prioritaire
+          </div>
         </div>
       </div>
 
@@ -216,12 +261,8 @@ const SchoolForm: React.FC<SchoolFormProps> = ({ school, onSuccess, onCancel }) 
         >
           Annuler
         </Button>
-        <Button
-          type="submit"
-          loading={isLoading}
-          disabled={isLoading}
-        >
-          {school ? 'Modifier' : 'Créer'} l'École
+        <Button type="submit" loading={isLoading} disabled={isLoading}>
+          {school ? "Modifier" : "Créer"} l'École
         </Button>
       </div>
     </form>

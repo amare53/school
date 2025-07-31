@@ -1,6 +1,6 @@
-import { authApi } from '../../../shared/services/api';
-import { useAppStore } from '../../../shared/stores';
-import type { User } from '../../../shared/types';
+import { authApi } from "../../../shared/services/api";
+import { useAppStore } from "../../../shared/stores";
+import type { User } from "../../../shared/types";
 
 export class AuthService {
   // Vérifier si l'utilisateur est connecté
@@ -25,11 +25,11 @@ export class AuthService {
   static async login(email: string, password: string) {
     try {
       const response = await authApi.login(email, password);
-      
+
       // Stocker les données dans le store
       const { login } = useAppStore.getState();
       login(response.data.user, response.data.token);
-      
+
       return response.data;
     } catch (error) {
       throw error;
@@ -43,7 +43,7 @@ export class AuthService {
       await authApi.logout();
     } catch (error) {
       // Continuer même si l'API échoue
-      console.warn('Logout API call failed:', error);
+      console.warn("Logout API call failed:", error);
     } finally {
       // Nettoyer le store
       const { logout } = useAppStore.getState();
@@ -68,7 +68,10 @@ export class AuthService {
   // Changer le mot de passe
   static async changePassword(currentPassword: string, newPassword: string) {
     try {
-      const response = await authApi.changePassword(currentPassword, newPassword);
+      const response = await authApi.changePassword(
+        currentPassword,
+        newPassword
+      );
       return response;
     } catch (error) {
       throw error;
@@ -81,47 +84,61 @@ export class AuthService {
     if (!user) return false;
 
     const role = userRole || user.role;
-    
+
     // Admin plateforme a tous les droits
-    if (role === 'platform_admin') return true;
-    
+    if (role === "platform_admin") return true;
+
     // Logique de permissions basée sur les rôles
     const permissions: Record<string, string[]> = {
-      platform_admin: ['*'], // Toutes les permissions
+      platform_admin: [
+        "platform:manage",
+        "schools:create",
+        "schools:read",
+        "schools:update",
+        "schools:delete",
+        "school_managers:create",
+        "school_managers:read",
+        "school_managers:update",
+        "school_managers:delete",
+        "reports:platform",
+      ],
       school_manager: [
-        'school:manage',
-        'users:manage',
-        'students:manage',
-        'billing:manage',
-        'reports:view',
-        'settings:manage'
+        "schools:read",
+        "schools:update",
+        "students:manage",
+        "cashiers:create",
+        "cashiers:read",
+        "cashiers:update",
+        "cashiers:delete",
+        "accountants:create",
+        "accountants:read",
+        "accountants:update",
+        "accountants:delete",
+        "billing:manage",
+        "reports:view",
+        "settings:manage",
       ],
       cashier: [
-        'students:create',
-        'students:read',
-        'students:update',
-        'invoices:manage',
-        'payments:manage',
-        'expenses:manage'
+        "school:read",
+        "students:create",
+        "students:read",
+        "students:update",
+        "invoices:manage",
+        "payments:manage",
+        "expenses:manage",
       ],
       accountant: [
-        'accounting:read',
-        'reports:accounting',
-        'payments:read',
-        'invoices:read'
+        "school:read",
+        "accounting:read",
+        "reports:accounting",
+        "payments:read",
+        "invoices:read",
       ],
-      student: [
-        'profile:read',
-        'invoices:read:own',
-        'payments:read:own'
-      ]
+      student: ["profile:read", "invoices:read:own", "payments:read:own"],
     };
 
     const userPermissions = permissions[role] || [];
-    
-    // Si l'utilisateur a toutes les permissions
-    if (userPermissions.includes('*')) return true;
-    
+
     // Vérifier la permission spécifique
     return userPermissions.includes(permission);
   }
@@ -144,10 +161,10 @@ export class AuthService {
       try {
         // Vérifier que le token est toujours valide
         const response = await authApi.getMe();
-        
+
         // Mettre à jour les données utilisateur si nécessaire
         if (response.data) {
-          storage.set('current_user', response.data);
+          storage.set("current_user", response.data);
           return response.data;
         }
       } catch (error) {
@@ -164,40 +181,40 @@ export class AuthService {
   static getDemoUsers() {
     return [
       {
-        id: '1',
-        email: 'admin@school.com',
-        password: 'password123',
-        firstName: 'Jean',
-        lastName: 'Dupont',
-        role: 'platform_admin',
+        id: "1",
+        email: "admin@school.com",
+        password: "password123",
+        firstName: "Jean",
+        lastName: "Dupont",
+        role: "platform_admin",
         schoolId: null,
       },
       {
-        id: '2',
-        email: 'admin.ecole1@school.com',
-        password: 'password123',
-        firstName: 'Marie',
-        lastName: 'Martin',
-        role: 'school_manager',
-        schoolId: 'school-1',
+        id: "2",
+        email: "admin.ecole1@school.com",
+        password: "password123",
+        firstName: "Marie",
+        lastName: "Martin",
+        role: "school_manager",
+        schoolId: "school-1",
       },
       {
-        id: '3',
-        email: 'cashier@school.com',
-        password: 'password123',
-        firstName: 'Pierre',
-        lastName: 'Durand',
-        role: 'cashier',
-        schoolId: 'school-1',
+        id: "3",
+        email: "cashier@school.com",
+        password: "password123",
+        firstName: "Pierre",
+        lastName: "Durand",
+        role: "cashier",
+        schoolId: "school-1",
       },
       {
-        id: '4',
-        email: 'accountant@school.com',
-        password: 'password123',
-        firstName: 'Sophie',
-        lastName: 'Bernard',
-        role: 'accountant',
-        schoolId: 'school-1',
+        id: "4",
+        email: "accountant@school.com",
+        password: "password123",
+        firstName: "Sophie",
+        lastName: "Bernard",
+        role: "accountant",
+        schoolId: "school-1",
       },
     ];
   }

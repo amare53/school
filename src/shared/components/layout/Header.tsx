@@ -25,7 +25,7 @@ import {
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { useAuth, useUI } from "../../hooks";
-import { USER_ROLES } from "../../constants";
+import { USER_ROLE_LABELS, USER_ROLES } from "../../constants";
 import { cn } from "../../utils";
 
 interface HeaderProps {
@@ -54,7 +54,6 @@ const primaryNavigation: NavItem[] = [
     roles: [
       USER_ROLES.PLATFORM_ADMIN,
       USER_ROLES.SCHOOL_MANAGER,
-      USER_ROLES.CASHIER,
       USER_ROLES.ACCOUNTANT,
     ],
   },
@@ -71,16 +70,10 @@ const primaryNavigation: NavItem[] = [
     roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER],
   },
   {
-    name: "Sections",
-    href: "/sections",
-    icon: BookOpen,
-    roles: [USER_ROLES.PLATFORM_ADMIN, USER_ROLES.SCHOOL_MANAGER],
-  },
-  {
     name: "Configuration Frais",
     href: "/billing",
     icon: FileText,
-    roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER],
+    roles: [USER_ROLES.SCHOOL_MANAGER],
   },
   {
     name: "Paiements",
@@ -89,33 +82,32 @@ const primaryNavigation: NavItem[] = [
     roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER],
   },
   {
-    name: "Comptabilité",
-    href: "/accounting",
-    icon: Receipt,
-    roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.ACCOUNTANT],
-  },
-  {
     name: "Rapports",
     href: "/reports",
     icon: BarChart3,
     roles: [
-      USER_ROLES.PLATFORM_ADMIN,
       USER_ROLES.SCHOOL_MANAGER,
       USER_ROLES.CASHIER,
       USER_ROLES.ACCOUNTANT,
     ],
   },
   {
-    name: "Années Académiques",
-    href: "/academic-years",
-    icon: Calendar,
-    roles: [USER_ROLES.PLATFORM_ADMIN, USER_ROLES.SCHOOL_MANAGER],
-  },
-  {
     name: "Paramètres",
     href: "/settings",
     icon: Settings,
-    roles: [USER_ROLES.PLATFORM_ADMIN, USER_ROLES.SCHOOL_MANAGER],
+    roles: [USER_ROLES.SCHOOL_MANAGER],
+  },
+  {
+    name: "Dépenses",
+    href: "/expenses",
+    icon: DollarSign,
+    roles: [USER_ROLES.CASHIER],
+  },
+  {
+    name: "School Managers",
+    href: "/school-managers",
+    icon: UserCog,
+    roles: [USER_ROLES.PLATFORM_ADMIN],
   },
 ];
 
@@ -128,7 +120,7 @@ const secondaryNavigation: NavGroup[] = [
         name: "Utilisateurs",
         href: "/users",
         icon: Users,
-        roles: [USER_ROLES.PLATFORM_ADMIN, USER_ROLES.SCHOOL_MANAGER],
+        roles: [USER_ROLES.SCHOOL_MANAGER],
       },
     ],
   },
@@ -136,10 +128,22 @@ const secondaryNavigation: NavGroup[] = [
     name: "Structure Académique",
     items: [
       {
+        name: "Sections",
+        href: "/sections",
+        icon: BookOpen,
+        roles: [USER_ROLES.SCHOOL_MANAGER],
+      },
+      {
         name: "Classes",
         href: "/classes",
         icon: Users,
-        roles: [USER_ROLES.PLATFORM_ADMIN, USER_ROLES.SCHOOL_MANAGER],
+        roles: [USER_ROLES.SCHOOL_MANAGER],
+      },
+      {
+        name: "Années Académiques",
+        href: "/academic-years",
+        icon: Calendar,
+        roles: [USER_ROLES.SCHOOL_MANAGER],
       },
     ],
   },
@@ -147,10 +151,16 @@ const secondaryNavigation: NavGroup[] = [
     name: "Finances",
     items: [
       {
+        name: "Comptabilité",
+        href: "/accounting",
+        icon: Receipt,
+        roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.ACCOUNTANT],
+      },
+      {
         name: "Dépenses",
         href: "/expenses",
         icon: DollarSign,
-        roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER],
+        roles: [USER_ROLES.SCHOOL_MANAGER],
       },
     ],
   },
@@ -161,13 +171,13 @@ const secondaryNavigation: NavGroup[] = [
         name: "Analytics",
         href: "/analytics",
         icon: TrendingUp,
-        roles: [USER_ROLES.PLATFORM_ADMIN, USER_ROLES.SCHOOL_MANAGER],
+        roles: [USER_ROLES.SCHOOL_MANAGER],
       },
       {
         name: "Archives",
         href: "/archives",
         icon: Archive,
-        roles: [USER_ROLES.PLATFORM_ADMIN, USER_ROLES.SCHOOL_MANAGER],
+        roles: [USER_ROLES.SCHOOL_MANAGER],
       },
     ],
   },
@@ -178,6 +188,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const { unreadNotificationsCount } = useUI();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+
   const navigate = useNavigate();
 
   // Filtrer les actions principales selon les rôles
@@ -270,7 +281,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-gray-500 capitalize">
-                  {user?.role?.replace("_", " ")}
+                  {USER_ROLE_LABELS[user?.role]}
                 </p>
               </div>
               <ChevronDown className="h-4 w-4 text-gray-400" />

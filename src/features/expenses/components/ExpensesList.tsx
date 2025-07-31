@@ -1,28 +1,51 @@
-import React, { useState } from 'react';
-import { Plus, Search, DollarSign, Eye, Edit, Download, Filter, Receipt, FileText, AlertTriangle } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/ui/Card';
-import { Button } from '../../../shared/components/ui/Button';
-import { Input } from '../../../shared/components/ui/Input';
-import { Select } from '../../../shared/components/ui/Select';
-import { Badge } from '../../../shared/components/ui/Badge';
-import { Table, type Column } from '../../../shared/components/ui/Table';
-import { Modal } from '../../../shared/components/ui/Modal';
-import { expensesApi } from '../../../shared/services/api';
-import { formatDate, formatCurrency } from '../../../shared/utils';
-import { ExpenseForm } from './ExpenseForm';
-import { ExpenseDetails } from './ExpenseDetails';
-import type { Expense } from '../../../shared/types';
+import React, { useState } from "react";
+import {
+  Plus,
+  Search,
+  DollarSign,
+  Eye,
+  Edit,
+  Download,
+  Filter,
+  Receipt,
+  FileText,
+  AlertTriangle,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../../shared/components/ui/Card";
+import { Button } from "../../../shared/components/ui/Button";
+import { Input } from "../../../shared/components/ui/Input";
+import { Select } from "../../../shared/components/ui/Select";
+import { Badge } from "../../../shared/components/ui/Badge";
+import { Table, type Column } from "../../../shared/components/ui/Table";
+import { Modal } from "../../../shared/components/ui/Modal";
+import { expensesApi } from "../../../shared/services/api";
+import { formatDate, formatCurrency } from "../../../shared/utils";
+import { ExpenseForm } from "./ExpenseForm";
+import { ExpenseDetails } from "./ExpenseDetails";
+import type { Expense } from "../../../shared/types";
+import { useAuth } from "@/shared/stores";
+import { useApiPlatformCollection, useModal } from "@/shared/hooks";
+import { USER_ROLES } from "@/shared/constants";
 
 const ExpensesList: React.FC = () => {
-  const { currentSchool } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [dateFromFilter, setDateFromFilter] = useState('');
-  const [dateToFilter, setDateToFilter] = useState('');
-  const [hasReceiptFilter, setHasReceiptFilter] = useState('');
+  const { currentSchool, user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [dateFromFilter, setDateFromFilter] = useState("");
+  const [dateToFilter, setDateToFilter] = useState("");
+  const [hasReceiptFilter, setHasReceiptFilter] = useState("");
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const { isOpen: isFormOpen, open: openForm, close: closeForm } = useModal();
-  const { isOpen: isDetailsOpen, open: openDetails, close: closeDetails } = useModal();
+  const {
+    isOpen: isDetailsOpen,
+    open: openDetails,
+    close: closeDetails,
+  } = useModal();
 
   // Hook pour la collection de dépenses avec API Platform
   const {
@@ -39,10 +62,10 @@ const ExpensesList: React.FC = () => {
     {
       page: 1,
       itemsPerPage: 20,
-      order: { expenseDate: 'desc' },
+      order: { expenseDate: "desc" },
     },
     {
-      cacheKey: 'expenses_list',
+      cacheKey: "expenses_list",
       immediate: true,
     }
   );
@@ -58,7 +81,7 @@ const ExpensesList: React.FC = () => {
       category: categoryFilter || undefined,
       dateFrom: dateFromFilter || undefined,
       dateTo: dateToFilter || undefined,
-      hasReceipt: hasReceiptFilter ? hasReceiptFilter === 'true' : undefined,
+      hasReceipt: hasReceiptFilter ? hasReceiptFilter === "true" : undefined,
     });
   };
 
@@ -79,23 +102,23 @@ const ExpensesList: React.FC = () => {
 
   const getCategoryBadge = (category: string) => {
     const variants = {
-      salaries: 'success',
-      utilities: 'info',
-      supplies: 'warning',
-      maintenance: 'default',
-      other: 'default',
+      salaries: "success",
+      utilities: "info",
+      supplies: "warning",
+      maintenance: "default",
+      other: "default",
     } as const;
-    
+
     const labels = {
-      salaries: 'Salaires',
-      utilities: 'Services',
-      supplies: 'Fournitures',
-      maintenance: 'Maintenance',
-      other: 'Autres',
+      salaries: "Salaires",
+      utilities: "Services",
+      supplies: "Fournitures",
+      maintenance: "Maintenance",
+      other: "Autres",
     };
 
     return (
-      <Badge variant={variants[category as keyof typeof variants] || 'default'}>
+      <Badge variant={variants[category as keyof typeof variants] || "default"}>
         {labels[category as keyof typeof labels] || category}
       </Badge>
     );
@@ -103,8 +126,8 @@ const ExpensesList: React.FC = () => {
 
   const columns: Column<Expense>[] = [
     {
-      key: 'expenseNumber',
-      title: 'Dépense',
+      key: "expenseNumber",
+      title: "Dépense",
       sortable: true,
       render: (_, expense) => (
         <div className="flex items-center space-x-3">
@@ -112,7 +135,9 @@ const ExpensesList: React.FC = () => {
             <DollarSign className="h-5 w-5 text-red-600" />
           </div>
           <div>
-            <div className="font-medium text-gray-900">{expense.expenseNumber}</div>
+            <div className="font-medium text-gray-900">
+              {expense.expenseNumber}
+            </div>
             <div className="text-sm text-gray-500 truncate max-w-xs">
               {expense.description}
             </div>
@@ -121,8 +146,8 @@ const ExpensesList: React.FC = () => {
       ),
     },
     {
-      key: 'amount',
-      title: 'Montant',
+      key: "amount",
+      title: "Montant",
       sortable: true,
       render: (amount) => (
         <div className="font-medium text-red-600">
@@ -131,28 +156,28 @@ const ExpensesList: React.FC = () => {
       ),
     },
     {
-      key: 'expenseDate',
-      title: 'Date',
+      key: "expenseDate",
+      title: "Date",
       sortable: true,
       render: (date) => formatDate(date),
     },
     {
-      key: 'category',
-      title: 'Catégorie',
+      key: "category",
+      title: "Catégorie",
       render: (category) => getCategoryBadge(category),
     },
     {
-      key: 'supplier',
-      title: 'Fournisseur',
+      key: "supplier",
+      title: "Fournisseur",
       render: (supplier) => (
         <div className="text-sm text-gray-900">
-          {supplier || 'Non spécifié'}
+          {supplier || "Non spécifié"}
         </div>
       ),
     },
     {
-      key: 'receipt',
-      title: 'Justificatif',
+      key: "receipt",
+      title: "Justificatif",
       render: (_, expense) => (
         <div className="flex items-center">
           {expense.receiptUrl ? (
@@ -170,8 +195,8 @@ const ExpensesList: React.FC = () => {
       ),
     },
     {
-      key: 'actions',
-      title: 'Actions',
+      key: "actions",
+      title: "Actions",
       render: (_, expense) => (
         <div className="flex items-center space-x-2">
           <Button
@@ -182,20 +207,19 @@ const ExpensesList: React.FC = () => {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEditExpense(expense)}
-            title="Modifier"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          {expense.receiptUrl && (
+
+          {USER_ROLES.CASHIER !== user?.role && (
             <Button
               variant="ghost"
               size="sm"
-              title="Télécharger justificatif"
+              onClick={() => handleEditExpense(expense)}
+              title="Modifier"
             >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          {expense.receiptUrl && (
+            <Button variant="ghost" size="sm" title="Télécharger justificatif">
               <Download className="h-4 w-4" />
             </Button>
           )}
@@ -205,18 +229,18 @@ const ExpensesList: React.FC = () => {
   ];
 
   const categoryOptions = [
-    { value: '', label: 'Toutes les catégories' },
-    { value: 'salaries', label: 'Salaires' },
-    { value: 'utilities', label: 'Services (eau, électricité)' },
-    { value: 'supplies', label: 'Fournitures' },
-    { value: 'maintenance', label: 'Maintenance' },
-    { value: 'other', label: 'Autres' },
+    { value: "", label: "Toutes les catégories" },
+    { value: "salaries", label: "Salaires" },
+    { value: "utilities", label: "Services (eau, électricité)" },
+    { value: "supplies", label: "Fournitures" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "other", label: "Autres" },
   ];
 
   const receiptOptions = [
-    { value: '', label: 'Tous' },
-    { value: 'true', label: 'Avec justificatif' },
-    { value: 'false', label: 'Sans justificatif' },
+    { value: "", label: "Tous" },
+    { value: "true", label: "Avec justificatif" },
+    { value: "false", label: "Sans justificatif" },
   ];
 
   return (
@@ -225,9 +249,14 @@ const ExpensesList: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Dépenses</h2>
-          <p className="text-gray-600">Gérez toutes les dépenses avec justificatifs</p>
+          <p className="text-gray-600">
+            Gérez toutes les dépenses avec justificatifs
+          </p>
         </div>
-        <Button onClick={handleCreateExpense} leftIcon={<Plus className="h-4 w-4" />}>
+        <Button
+          onClick={handleCreateExpense}
+          leftIcon={<Plus className="h-4 w-4" />}
+        >
           Nouvelle Dépense
         </Button>
       </div>
@@ -289,15 +318,15 @@ const ExpensesList: React.FC = () => {
               />
             </div>
             <div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 leftIcon={<Filter className="h-4 w-4" />}
                 onClick={() => {
-                  setSearchTerm('');
-                  setCategoryFilter('');
-                  setDateFromFilter('');
-                  setDateToFilter('');
-                  setHasReceiptFilter('');
+                  setSearchTerm("");
+                  setCategoryFilter("");
+                  setDateFromFilter("");
+                  setDateToFilter("");
+                  setHasReceiptFilter("");
                   updateParams({ page: 1 });
                 }}
               >
@@ -311,9 +340,7 @@ const ExpensesList: React.FC = () => {
       {/* Expenses Table */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Liste des Dépenses ({pagination.totalItems})
-          </CardTitle>
+          <CardTitle>Liste des Dépenses ({pagination.totalItems})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table
@@ -330,7 +357,7 @@ const ExpensesList: React.FC = () => {
       </Card>
 
       {/* Alert pour justificatifs manquants */}
-      {expenses.some(e => !e.receiptUrl) && (
+      {expenses.some((e) => !e.receiptUrl) && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="p-4">
             <div className="flex items-start space-x-3">
@@ -338,8 +365,8 @@ const ExpensesList: React.FC = () => {
               <div className="text-sm text-yellow-800">
                 <p className="font-medium mb-1">Justificatifs manquants</p>
                 <p>
-                  Certaines dépenses n'ont pas de justificatif.
-                  Pensez à ajouter les reçus pour une comptabilité complète.
+                  Certaines dépenses n'ont pas de justificatif. Pensez à ajouter
+                  les reçus pour une comptabilité complète.
                 </p>
               </div>
             </div>
@@ -351,7 +378,7 @@ const ExpensesList: React.FC = () => {
       <Modal
         isOpen={isFormOpen}
         onClose={closeForm}
-        title={selectedExpense ? 'Modifier la Dépense' : 'Nouvelle Dépense'}
+        title={selectedExpense ? "Modifier la Dépense" : "Nouvelle Dépense"}
         size="lg"
       >
         <ExpenseForm
@@ -369,7 +396,7 @@ const ExpensesList: React.FC = () => {
         isOpen={isDetailsOpen}
         onClose={closeDetails}
         title="Détails de la Dépense"
-        size="lg"
+        size="xl"
       >
         {selectedExpense && (
           <ExpenseDetails

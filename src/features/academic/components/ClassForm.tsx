@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Hash, Calendar, BookOpen } from 'lucide-react';
-import { Button } from '../../../shared/components/ui/Button';
-import { Input } from '../../../shared/components/ui/Input';
-import { Select } from '../../../shared/components/ui/Select';
-import { useAuth, useUI } from '../../../shared/hooks';
-import { useFakeDataStore } from '../../../shared/stores/fakeData';
-import { classSchema, type ClassFormData } from '../../../shared/validations';
-import type { Class, AcademicYear, Section } from '../../../shared/types';
+import React, { useState, useEffect } from "react";
+import { Users, Hash, Calendar, BookOpen } from "lucide-react";
+import { Button } from "../../../shared/components/ui/Button";
+import { Input } from "../../../shared/components/ui/Input";
+import { Select } from "../../../shared/components/ui/Select";
+import { useAuth, useUI } from "../../../shared/hooks";
+import { classSchema, type ClassFormData } from "../../../shared/validations";
+import type { Class, AcademicYear, Section } from "../../../shared/types";
 
 interface ClassFormProps {
   classItem?: Class | null;
@@ -14,13 +13,16 @@ interface ClassFormProps {
   onCancel: () => void;
 }
 
-const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel }) => {
+const ClassForm: React.FC<ClassFormProps> = ({
+  classItem,
+  onSuccess,
+  onCancel,
+}) => {
   const { currentSchool } = useAuth();
-  const { addClass, updateClass, getAcademicYearsBySchool, getSectionsBySchool } = useFakeDataStore();
   const [formData, setFormData] = useState<ClassFormData>({
-    academicYearId: '',
-    sectionId: '',
-    name: '',
+    academicYearId: "",
+    sectionId: "",
+    name: "",
     capacity: 30,
   });
   const [errors, setErrors] = useState<Partial<ClassFormData>>({});
@@ -28,10 +30,9 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
 
   const { showNotification } = useUI();
 
-  // Récupérer les données pour l'école courante
-  const schoolId = currentSchool?.id || '';
-  const academicYears = getAcademicYearsBySchool(schoolId);
-  const sections = getSectionsBySchool(schoolId);
+  // TODO: Remplacer par des appels API réels
+  const academicYears: AcademicYear[] = [];
+  const sections: Section[] = [];
 
   // Initialiser le formulaire avec les données de la classe si en mode édition
   useEffect(() => {
@@ -45,37 +46,45 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
     }
   }, [classItem]);
 
-  const handleChange = (field: keyof ClassFormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = field === 'capacity' ? parseInt(e.target.value) || 0 : e.target.value;
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Effacer l'erreur quand l'utilisateur tape
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const handleChange =
+    (field: keyof ClassFormData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value =
+        field === "capacity" ? parseInt(e.target.value) || 0 : e.target.value;
+      setFormData((prev) => ({ ...prev, [field]: value }));
 
-  const handleSelectChange = (field: keyof ClassFormData) => (value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Auto-générer le nom de la classe
-    if (field === 'academicYearId' || field === 'sectionId') {
-      const academicYear = academicYears.find(y => y.id === (field === 'academicYearId' ? value : formData.academicYearId));
-      const section = sections.find(s => s.id === (field === 'sectionId' ? value : formData.sectionId));
-      
-      if (academicYear && section) {
-        const yearCode = academicYear.name.split('-')[0]; // Ex: "2024" de "2024-2025"
-        const className = `${section.code}-${yearCode}`;
-        setFormData(prev => ({ ...prev, name: className }));
+      // Effacer l'erreur quand l'utilisateur tape
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
       }
-    }
-    
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+    };
+
+  const handleSelectChange =
+    (field: keyof ClassFormData) => (value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+
+      // Auto-générer le nom de la classe
+      if (field === "academicYearId" || field === "sectionId") {
+        const academicYear = academicYears.find(
+          (y) =>
+            y.id ===
+            (field === "academicYearId" ? value : formData.academicYearId)
+        );
+        const section = sections.find(
+          (s) => s.id === (field === "sectionId" ? value : formData.sectionId)
+        );
+
+        if (academicYear && section) {
+          const yearCode = academicYear.name.split("-")[0]; // Ex: "2024" de "2024-2025"
+          const className = `${section.code}-${yearCode}`;
+          setFormData((prev) => ({ ...prev, name: className }));
+        }
+      }
+
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    };
 
   const validateForm = (): boolean => {
     try {
@@ -95,44 +104,44 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       if (classItem) {
-        // Mise à jour
-        updateClass(classItem.id, formData);
+        // TODO: Appel API pour mise à jour
+        // await classesApi.update(classItem.id, formData);
+        showNotification("Mise à jour non implémentée", "warning");
+        return;
       } else {
-        // Création
-        addClass({
-          ...formData,
-          schoolId: currentSchool?.id || '',
-        });
+        // TODO: Appel API pour création
+        // await classesApi.create(formData);
+        showNotification("Création non implémentée", "warning");
+        return;
       }
-      
-      const action = classItem ? 'modifiée' : 'créée';
-      showNotification(`Classe ${action} avec succès`, 'success');
-      
+
+      const action = classItem ? "modifiée" : "créée";
+      showNotification(`Classe ${action} avec succès`, "success");
+
       onSuccess();
-      
     } catch (error: any) {
       showNotification(
-        error.message || 'Erreur lors de la sauvegarde',
-        'error'
+        error.message || "Erreur lors de la sauvegarde",
+        "error"
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const academicYearOptions = academicYears.map(year => ({
+  const academicYearOptions = academicYears.map((year) => ({
     value: year.id,
-    label: `${year.name} ${year.isCurrent ? '(Courante)' : ''}`,
+    label: `${year.name} ${year.isCurrent ? "(Courante)" : ""}`,
   }));
 
-  const sectionOptions = sections.map(section => ({
+  const sectionOptions = sections.map((section) => ({
     value: section.id,
     label: `${section.name} (${section.code})`,
   }));
@@ -150,7 +159,7 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
           label="Année académique *"
           options={academicYearOptions}
           value={formData.academicYearId}
-          onChange={handleSelectChange('academicYearId')}
+          onChange={handleSelectChange("academicYearId")}
           error={errors.academicYearId}
           placeholder="Sélectionner une année"
           disabled={isLoading}
@@ -160,7 +169,7 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
           label="Section *"
           options={sectionOptions}
           value={formData.sectionId}
-          onChange={handleSelectChange('sectionId')}
+          onChange={handleSelectChange("sectionId")}
           error={errors.sectionId}
           placeholder="Sélectionner une section"
           disabled={isLoading}
@@ -171,7 +180,7 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
             label="Nom de la classe *"
             placeholder="Ex: CP-A-2024"
             value={formData.name}
-            onChange={handleChange('name')}
+            onChange={handleChange("name")}
             error={errors.name}
             leftIcon={<Hash className="h-4 w-4" />}
             disabled={isLoading}
@@ -183,8 +192,8 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
             type="number"
             min="1"
             max="50"
-            value={formData.capacity?.toString() || ''}
-            onChange={handleChange('capacity')}
+            value={formData.capacity?.toString() || ""}
+            onChange={handleChange("capacity")}
             error={errors.capacity}
             leftIcon={<Users className="h-4 w-4" />}
             disabled={isLoading}
@@ -196,7 +205,9 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
       {/* Aperçu */}
       {formData.academicYearId && formData.sectionId && (
         <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-          <h4 className="font-medium text-indigo-900 mb-2">Aperçu de la classe :</h4>
+          <h4 className="font-medium text-indigo-900 mb-2">
+            Aperçu de la classe :
+          </h4>
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
               <Users className="h-5 w-5 text-indigo-600" />
@@ -204,8 +215,11 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
             <div>
               <div className="font-medium text-indigo-900">{formData.name}</div>
               <div className="text-sm text-indigo-700">
-                {sections.find(s => s.id === formData.sectionId)?.name} - 
-                {academicYears.find(y => y.id === formData.academicYearId)?.name}
+                {sections.find((s) => s.id === formData.sectionId)?.name} -
+                {
+                  academicYears.find((y) => y.id === formData.academicYearId)
+                    ?.name
+                }
               </div>
               <div className="text-sm text-indigo-600">
                 Capacité: {formData.capacity} élèves
@@ -225,12 +239,8 @@ const ClassForm: React.FC<ClassFormProps> = ({ classItem, onSuccess, onCancel })
         >
           Annuler
         </Button>
-        <Button
-          type="submit"
-          loading={isLoading}
-          disabled={isLoading}
-        >
-          {classItem ? 'Modifier' : 'Créer'} la Classe
+        <Button type="submit" loading={isLoading} disabled={isLoading}>
+          {classItem ? "Modifier" : "Créer"} la Classe
         </Button>
       </div>
     </form>
