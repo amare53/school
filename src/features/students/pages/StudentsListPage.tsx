@@ -69,7 +69,6 @@ const StudentsListPage: React.FC = () => {
   // Mettre à jour les filtres
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    search(value);
   };
 
   const handleStatusFilterChange = (value: string) => {
@@ -98,7 +97,7 @@ const StudentsListPage: React.FC = () => {
           </div>
           <div>
             <div className="font-medium text-gray-900">
-              {student.firstName} {student.lastName}
+              {student.firstName} {student.lastName} {student.middleName}
             </div>
             <div className="text-sm text-gray-500">
               N° {student.studentNumber}
@@ -243,24 +242,30 @@ const StudentsListPage: React.FC = () => {
                 leftIcon={<Search className="h-4 w-4" />}
               />
             </div>
-            <div className="w-48">
+            {/* <div className="w-48">
               <Select
                 options={statusOptions}
                 value={statusFilter}
                 onChange={handleStatusFilterChange}
                 placeholder="Statut"
               />
-            </div>
-            <div className="w-48">
+            </div> */}
+            {/* <div className="w-48">
               <Select
                 options={sectionOptions}
                 value={sectionFilter}
                 onChange={handleSectionFilterChange}
                 placeholder="Section"
               />
-            </div>
-            <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
-              Plus de filtres
+            </div> */}
+            <Button
+              onClick={() => {
+                search(searchTerm);
+              }}
+              variant="outline"
+              leftIcon={<Search className="h-4 w-4" />}
+            >
+              Rechercher
             </Button>
           </div>
         </CardContent>

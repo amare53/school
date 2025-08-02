@@ -24,6 +24,8 @@ import { ExpensesPage } from "./features/expenses/pages/ExpensesPage";
 import { ReportsPage } from "./features/reports/pages/ReportsPage";
 import { SchoolManagersListPage } from "./features/users/pages/SchoolManagersListPage";
 import { UsersListPage } from "./features/users/pages/UsersListPage";
+import { CashRegisterPage } from "./features/cash/pages/CashRegisterPage";
+import { CashReportsPage } from "./features/cash/pages/CashReportsPage";
 import { USER_ROLES } from "./shared/constants";
 
 // Pages temporaires pour la démonstration
@@ -262,6 +264,29 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/cash"
+          element={
+            <ProtectedRoute
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
+            >
+              <CashRegisterPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/cashier/reports"
+          element={
+            <ProtectedRoute
+              requiredRoles={[USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER]}
+            >
+              <CashReportsPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         {/* Routes temporaires pour la navigation */}

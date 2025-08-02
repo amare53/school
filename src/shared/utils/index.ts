@@ -27,7 +27,7 @@ export const formatDateTime = (date: string | Date): string => {
 
 export const formatCurrency = (
   amount: number,
-  currency: string = "XOF"
+  currency: string = "CDF"
 ): string => {
   // Gestion des devises congolaises
   if (currency === "CDF") {
@@ -125,6 +125,26 @@ export const generateExpenseNumber = (schoolCode: string): string => {
     .toString()
     .padStart(4, "0");
   return `DEP-${schoolCode}-${year}${month}-${random}`;
+};
+
+export const generateCashSessionNumber = (schoolCode: string): string => {
+  const year = new Date().getFullYear();
+  const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
+  const day = new Date().getDate().toString().padStart(2, "0");
+  const random = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
+  return `CASH-${schoolCode}-${year}${month}${day}-${random}`;
+};
+
+export const generateCashMovementNumber = (schoolCode: string): string => {
+  const year = new Date().getFullYear();
+  const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
+  const day = new Date().getDate().toString().padStart(2, "0");
+  const random = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
+  return `MOV-${schoolCode}-${year}${month}${day}-${random}`;
 };
 
 // Validation des données

@@ -11,7 +11,7 @@ import { USER_ROLES } from "@/shared/constants";
 
 const LoginForm: React.FC = () => {
   const [formData, setFormData] = useState<LoginFormData>({
-    email: "admin@csoasis.com",
+    email: "nzolo@gmail.com",
     password: "password123",
   });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
@@ -174,9 +174,9 @@ const LoginForm: React.FC = () => {
           <div className="text-sm text-blue-800">
             <p className="font-medium mb-1">Comptes de démonstration :</p>
             <div className="space-y-1 text-xs">
-              <p>
+              {/* <p>
                 <strong>Admin École:</strong> admin@csoasis.com / password123
-              </p>
+              </p> */}
               {/* <p>
                 <strong>Admin École :</strong> admin.ecole@csoasis.com /
                 password123

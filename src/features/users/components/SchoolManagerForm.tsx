@@ -2,9 +2,15 @@ import React, { useState, useEffect } from "react";
 import { UserCog, Mail, Phone, User, Building } from "lucide-react";
 import { Button } from "../../../shared/components/ui/Button";
 import { Input } from "../../../shared/components/ui/Input";
-import { useAuth, useUI } from "../../../shared/hooks";
+import {
+  useApiPlatformCollection,
+  useAuth,
+  useUI,
+} from "../../../shared/hooks";
 import { userSchema } from "../../../shared/validations";
 import type { User as UserType } from "../../../shared/types";
+import { schoolsApi, usersApi } from "@/shared/services/api";
+import { USER_ROLES } from "@/shared/constants";
 
 interface SchoolManagerFormProps {
   manager?: UserType | null;
@@ -32,7 +38,18 @@ const SchoolManagerForm: React.FC<SchoolManagerFormProps> = ({
   const { showNotification } = useUI();
 
   // TODO: Remplacer par des appels API réels
-  const schools: any[] = [];
+  const { data: schools } = useApiPlatformCollection(
+    (params) => schoolsApi.getCollection(params),
+    {
+      page: 1,
+      itemsPerPage: 50,
+      order: { createdAt: "desc" },
+    },
+    {
+      cacheKey: "sections_list",
+      immediate: true,
+    }
+  );
 
   // Initialiser le formulaire avec les données du manager si en mode édition
   useEffect(() => {
@@ -106,11 +123,12 @@ const SchoolManagerForm: React.FC<SchoolManagerFormProps> = ({
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
-        role: "school_manager" as const,
-        assignedSchools: formData.assignedSchools,
-        schoolId: formData.assignedSchools[0], // École principale
+        role: USER_ROLES.SCHOOL_MANAGER,
+        managedSchools: formData.assignedSchools.map(
+          (s) => "/api/schools/" + s
+        ),
         status: "active" as const,
-        ...(formData.password && { password: formData.password }),
+        ...(formData.password && { plainPassword: formData.password }),
       };
 
       if (manager) {
@@ -120,9 +138,7 @@ const SchoolManagerForm: React.FC<SchoolManagerFormProps> = ({
         return;
       } else {
         // TODO: Appel API pour création
-        // await usersApi.create(userData);
-        showNotification("Création non implémentée", "warning");
-        return;
+        await usersApi.create(userData);
       }
 
       const action = manager ? "modifié" : "créé";
@@ -132,7 +148,9 @@ const SchoolManagerForm: React.FC<SchoolManagerFormProps> = ({
     } catch (error: any) {
       showNotification(
         error.message || "Erreur lors de la sauvegarde",
-        "error"
+        "error",
+        "",
+        3000
       );
     } finally {
       setIsLoading(false);

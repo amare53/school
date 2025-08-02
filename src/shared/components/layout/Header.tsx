@@ -21,6 +21,7 @@ import {
   Archive,
   MoreHorizontal,
   UserCog,
+  Calculator,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
@@ -76,13 +77,13 @@ const primaryNavigation: NavItem[] = [
     roles: [USER_ROLES.SCHOOL_MANAGER],
   },
   {
-    name: "Paiements",
-    href: "/payments",
-    icon: CreditCard,
-    roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER],
+    name: "Caisse",
+    href: "/cash",
+    icon: Calculator,
+    roles: [USER_ROLES.CASHIER],
   },
   {
-    name: "Rapports",
+    name: "Rapports et Analytics",
     href: "/reports",
     icon: BarChart3,
     roles: [
@@ -92,16 +93,16 @@ const primaryNavigation: NavItem[] = [
     ],
   },
   {
-    name: "Paramètres",
-    href: "/settings",
-    icon: Settings,
-    roles: [USER_ROLES.SCHOOL_MANAGER],
+    name: "Rapports de Caisse",
+    href: "/cashier/reports",
+    icon: BarChart3,
+    roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.CASHIER],
   },
   {
     name: "Dépenses",
     href: "/expenses",
     icon: DollarSign,
-    roles: [USER_ROLES.CASHIER],
+    roles: [],
   },
   {
     name: "School Managers",
@@ -109,21 +110,16 @@ const primaryNavigation: NavItem[] = [
     icon: UserCog,
     roles: [USER_ROLES.PLATFORM_ADMIN],
   },
+  {
+    name: "Utilisateurs",
+    href: "/users",
+    icon: Users,
+    roles: [USER_ROLES.SCHOOL_MANAGER],
+  },
 ];
 
 // Actions secondaires groupées dans le dropdown "Plus"
 const secondaryNavigation: NavGroup[] = [
-  {
-    name: "Administration",
-    items: [
-      {
-        name: "Utilisateurs",
-        href: "/users",
-        icon: Users,
-        roles: [USER_ROLES.SCHOOL_MANAGER],
-      },
-    ],
-  },
   {
     name: "Structure Académique",
     items: [
@@ -143,40 +139,6 @@ const secondaryNavigation: NavGroup[] = [
         name: "Années Académiques",
         href: "/academic-years",
         icon: Calendar,
-        roles: [USER_ROLES.SCHOOL_MANAGER],
-      },
-    ],
-  },
-  {
-    name: "Finances",
-    items: [
-      {
-        name: "Comptabilité",
-        href: "/accounting",
-        icon: Receipt,
-        roles: [USER_ROLES.SCHOOL_MANAGER, USER_ROLES.ACCOUNTANT],
-      },
-      {
-        name: "Dépenses",
-        href: "/expenses",
-        icon: DollarSign,
-        roles: [USER_ROLES.SCHOOL_MANAGER],
-      },
-    ],
-  },
-  {
-    name: "Analytics & Archives",
-    items: [
-      {
-        name: "Analytics",
-        href: "/analytics",
-        icon: TrendingUp,
-        roles: [USER_ROLES.SCHOOL_MANAGER],
-      },
-      {
-        name: "Archives",
-        href: "/archives",
-        icon: Archive,
         roles: [USER_ROLES.SCHOOL_MANAGER],
       },
     ],

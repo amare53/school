@@ -2,11 +2,12 @@ import React from "react";
 import { FileText } from "lucide-react";
 import { useAuth } from "../../../shared/hooks";
 import { FeeTypesList } from "../components/FeeTypesList";
+import { USER_ROLES } from "@/shared/constants";
 
 const BillingPage: React.FC = () => {
   const { user } = useAuth();
   // Vérifier les permissions
-  if (!user || !["school_manager", "cashier"].includes(user.role)) {
+  if (!user || ![USER_ROLES.SCHOOL_MANAGER].includes(user.role)) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">

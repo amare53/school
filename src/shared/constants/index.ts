@@ -66,6 +66,26 @@ export const PAYMENT_METHOD_LABELS = {
   [PAYMENT_METHODS.MOBILE_MONEY]: "Mobile Money",
 };
 
+export const CASH_MOVEMENT_TYPES = {
+  IN: "in",
+  OUT: "out",
+} as const;
+
+export const CASH_MOVEMENT_TYPE_LABELS = {
+  [CASH_MOVEMENT_TYPES.IN]: "Entrée",
+  [CASH_MOVEMENT_TYPES.OUT]: "Sortie",
+};
+
+export const CASH_SESSION_STATUS = {
+  OPEN: "open",
+  CLOSED: "closed",
+} as const;
+
+export const CASH_SESSION_STATUS_LABELS = {
+  [CASH_SESSION_STATUS.OPEN]: "Ouverte",
+  [CASH_SESSION_STATUS.CLOSED]: "Fermée",
+};
+
 export const GENDER = {
   MALE: "male",
   FEMALE: "female",

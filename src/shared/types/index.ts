@@ -1,12 +1,9 @@
 // Types globaux de l'application
 
+import { USER_ROLES } from "../constants";
+
 // Énumérations
-export type UserRole =
-  | "platform_admin"
-  | "school_manager"
-  | "cashier"
-  | "accountant"
-  | "student";
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export type UserStatus = "active" | "inactive" | "archived";
 export type SchoolStatus = "active" | "suspended" | "archived";
 export type StudentStatus =
@@ -23,6 +20,9 @@ export type InvoiceStatus =
   | "cancelled";
 export type PaymentMethod = "cash" | "bank_transfer" | "check" | "mobile_money";
 export type Gender = "male" | "female";
+
+// Réexporter les types de caisse
+export * from "./cash";
 
 // Entités de base
 export interface User {
@@ -61,6 +61,7 @@ export interface Student {
   studentNumber: string;
   firstName: string;
   lastName: string;
+  middleName: string;
   dateOfBirth?: string;
   gender?: Gender;
   parentName?: string;

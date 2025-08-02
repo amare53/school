@@ -182,21 +182,21 @@ const UsersListPage: React.FC = () => {
   ];
 
   // Vérifier les permissions
-  if (currentUser?.role !== "school_manager") {
-    return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users className="w-8 h-8 text-red-600" />
-        </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Accès refusé
-        </h2>
-        <p className="text-gray-600">
-          Seuls les gestionnaires d'école peuvent gérer les utilisateurs.
-        </p>
-      </div>
-    );
-  }
+  // if (currentUser?.role !== "school_manager") {
+  //   return (
+  //     <div className="text-center py-12">
+  //       <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+  //         <Users className="w-8 h-8 text-red-600" />
+  //       </div>
+  //       <h2 className="text-xl font-semibold text-gray-900 mb-2">
+  //         Accès refusé
+  //       </h2>
+  //       <p className="text-gray-600">
+  //         Seuls les gestionnaires d'école peuvent gérer les utilisateurs.
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-6">

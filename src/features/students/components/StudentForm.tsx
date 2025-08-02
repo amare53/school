@@ -52,6 +52,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    middleName: "",
     dateOfBirth: "",
     gender: undefined,
     parentName: "",
@@ -106,6 +107,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       setFormData({
         firstName: student.firstName,
         lastName: student.lastName,
+        middleName: student.middleName || "",
         dateOfBirth: student.dateOfBirth || "",
         gender: student.gender,
         parentName: student.parentName || "",
@@ -160,6 +162,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
     e.preventDefault();
 
     if (!validateForm()) return;
+
+    setIsLoading(true);
 
     try {
       const data = { ...formData };
@@ -230,22 +234,29 @@ const StudentForm: React.FC<StudentFormProps> = ({
           Informations Personnelles
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Prénom *"
-            placeholder="Prénom de l'élève"
-            value={formData.firstName}
-            onChange={handleChange("firstName")}
-            error={errors.firstName}
-            disabled={isLoading}
-          />
-
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="Nom *"
             placeholder="Nom de famille"
             value={formData.lastName}
             onChange={handleChange("lastName")}
             error={errors.lastName}
+            disabled={isLoading}
+          />
+          <Input
+            label="Postnom"
+            placeholder="Postnom de l'élève"
+            value={formData.middleName}
+            onChange={handleChange("middleName")}
+            error={errors.middleName}
+            disabled={isLoading}
+          />
+          <Input
+            label="Prénom *"
+            placeholder="Prénom de l'élève"
+            value={formData.firstName}
+            onChange={handleChange("firstName")}
+            error={errors.firstName}
             disabled={isLoading}
           />
         </div>
@@ -271,16 +282,6 @@ const StudentForm: React.FC<StudentFormProps> = ({
             disabled={isLoading}
           />
         </div>
-
-        <Input
-          label="Adresse"
-          placeholder="Adresse complète de l'élève"
-          value={formData.address}
-          onChange={handleChange("address")}
-          error={errors.address}
-          leftIcon={<MapPin className="h-4 w-4" />}
-          disabled={isLoading}
-        />
       </div>
 
       {/* Informations du parent/tuteur */}
@@ -290,17 +291,16 @@ const StudentForm: React.FC<StudentFormProps> = ({
           Informations du Parent/Tuteur
         </h3>
 
-        <Input
-          label="Nom du parent/tuteur"
-          placeholder="Nom complet du parent ou tuteur"
-          value={formData.parentName}
-          onChange={handleChange("parentName")}
-          error={errors.parentName}
-          leftIcon={<User className="h-4 w-4" />}
-          disabled={isLoading}
-        />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Nom du parent/tuteur"
+            placeholder="Nom complet du parent ou tuteur"
+            value={formData.parentName}
+            onChange={handleChange("parentName")}
+            error={errors.parentName}
+            leftIcon={<User className="h-4 w-4" />}
+            disabled={isLoading}
+          />
           <Input
             label="Téléphone du parent"
             placeholder="+243 XX XXX XXXX"
@@ -308,17 +308,6 @@ const StudentForm: React.FC<StudentFormProps> = ({
             onChange={handleChange("parentPhone")}
             error={errors.parentPhone}
             leftIcon={<Phone className="h-4 w-4" />}
-            disabled={isLoading}
-          />
-
-          <Input
-            label="Email du parent"
-            type="email"
-            placeholder="parent@email.com"
-            value={formData.parentEmail}
-            onChange={handleChange("parentEmail")}
-            error={errors.parentEmail}
-            leftIcon={<Mail className="h-4 w-4" />}
             disabled={isLoading}
           />
         </div>

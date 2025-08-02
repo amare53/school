@@ -304,7 +304,8 @@ const StudentDetailsPage: React.FC = () => {
         <div className="flex items-center space-x-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Dossier de {student.firstName} {student.lastName}
+              Dossier de {student.firstName} {student.lastName}{" "}
+              {student.middleName}
             </h1>
             <p className="text-gray-600">
               Numéro d'élève : {student.studentNumber}
@@ -392,6 +393,12 @@ const StudentDetailsPage: React.FC = () => {
               <div>
                 <label className="text-sm font-medium text-gray-600">Nom</label>
                 <p className="text-gray-900">{student.lastName}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">
+                  Post Nom
+                </label>
+                <p className="text-gray-900">{student.middleName}</p>
               </div>
             </div>
 

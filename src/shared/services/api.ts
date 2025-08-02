@@ -76,6 +76,7 @@ const createApiInstance = (): AxiosInstance => {
       // Erreur de validation ou autre erreur client
       const message =
         response.data?.["description"] ||
+        response.data?.["error"] ||
         response.data?.message ||
         ERROR_MESSAGES.UNKNOWN_ERROR;
       return Promise.reject(new Error(message));

@@ -28,6 +28,8 @@ import {
   paymentsApi,
   studentsApi,
 } from "@/shared/services/api";
+import { useCash } from "@/features/cash/stores/cashStore";
+import { cashRegisterService } from "@/features/cash/services/cashService";
 
 interface PaymentFormProps {
   payment?: Payment | null;
@@ -38,7 +40,7 @@ interface PaymentFormProps {
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
   payment,
-  preselectedStudentId,
+  preselectedStudentId = null,
   onSuccess,
   onCancel,
 }) => {
@@ -59,6 +61,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFeeType, setSelectedFeeType] = useState<any>(null);
+  const { setActiveSession, setLoading, activeSession } = useCash();
 
   const { showNotification } = useUI();
 
@@ -90,7 +93,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   );
 
   const { data: student } = useApiPlatformCollection(
-    (params) => studentsApi.getItem(params),
+    (params) => {
+      if (params) {
+        return studentsApi.getItem(params);
+      }
+
+      return null;
+    },
     preselectedStudentId,
     {
       cacheKey: "payment__form_users_list",
@@ -116,7 +125,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const studentOptions: any[] = students.map((s) => ({
     value: s.id,
-    label: s.firstName + " " + s.lastName,
+    label: s.firstName + " " + s.lastName + " " + (s?.middleName || ""),
   }));
 
   const feeTypeOptions: any[] = feeTypes.map((s) => ({
@@ -139,6 +148,21 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       });
     }
   }, [payment]);
+
+  useEffect(() => {
+    loadActiveSession();
+  }, []);
+
+  const loadActiveSession = async () => {
+    setLoading("session", true);
+    try {
+      const session = await cashRegisterService.getActiveSession();
+      setActiveSession(session);
+    } catch {
+    } finally {
+      setLoading("session", false);
+    }
+  };
 
   // Auto-remplir le montant et calculer les mois en souffrance
   useEffect(() => {
@@ -239,6 +263,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         data.school = `/api/schools/${data.school}`;
         data.createdBy = `/api/users/${data.createdBy}`;
         data.academicYear = currentAcademicYear["@id"];
+        data.cashRegisterSession =
+          "/api/cash_register_sessions/" + activeSession.id;
         if (selectedFeeType?.billingFrequency === "monthly") {
           data.monthPayment = monthFees(false);
         }
@@ -273,8 +299,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const monthFees = (string: boolean = true) => {
     const fees =
-      student?.payments.filter((p) => p?.feeType.id === selectedFeeType.id) ||
-      [];
+      students
+        .find((s) => s.id === formData.student)
+        ?.payments?.filter((p) => p?.feeType.id === selectedFeeType.id) || [];
 
     let month = new Date(currentAcademicYear["startDate"] || "");
     if (fees.length > 0) {
@@ -290,6 +317,19 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
     return month.getMonth();
   };
+  if (!activeSession) {
+    return (
+      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+        <div className="flex items-start">
+          <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+          <div className="text-sm text-yellow-800">
+            <p className="font-medium mb-1">Aucune année académique courante</p>
+            <p>Il n'y a pas d'année académique définie comme "courante".</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -406,7 +446,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             <div className="flex items-center">
               <User className="h-4 w-4 mr-2" />
               <span>
-                Élève : {selectedStudent.firstName} {selectedStudent.lastName}
+                Élève : {selectedStudent.firstName} {selectedStudent.lastName}{" "}
+                {selectedStudent.middleName}
               </span>
             </div>
             <div className="flex items-center">
@@ -446,7 +487,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       )}
 
       {/* Informations sur les écritures comptables */}
-      {!payment && (
+      {false && !payment && (
         <div className="bg-green-50 p-4 rounded-lg border border-green-200">
           <div className="flex items-start">
             <FileText className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
